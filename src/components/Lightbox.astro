@@ -11,6 +11,15 @@ const { photos } = Astro.props;
 // Full-screen viewing tops out at 2000px: sharp on any screen, too small to
 // print well.
 const WIDTHS = [800, 1200, 1600, 2000];
+
+/** "Nikon Z 6 · 85mm · f/1.8 · 1/250s · ISO 400 · 2025" — blanks left out. */
+function detailLine(photo: Photo): string {
+  const d = photo.details;
+  if (!d) return '';
+  return [d.camera, d.lens, d.focal, d.aperture, d.shutter, d.iso, d.year]
+    .filter(Boolean)
+    .join('  ·  ');
+}
 ---
 
 <dialog class="lb" aria-label="Photo viewer">
@@ -35,7 +44,13 @@ const WIDTHS = [800, 1200, 1600, 2000];
   <div class="lb__stage" data-lb-stage>
     {
       photos.map((photo, i) => (
-        <figure class="lb__slide" data-lb-slide data-photo-id={photo.id} data-index={i}>
+        <figure
+          class="lb__slide"
+          data-lb-slide
+          data-photo-id={photo.id}
+          data-index={i}
+          data-details={detailLine(photo)}
+        >
           <Picture
             src={photo.src}
             alt={photo.alt}
@@ -54,7 +69,10 @@ const WIDTHS = [800, 1200, 1600, 2000];
   </div>
 
   <footer class="lb__bar">
-    <p class="lb__caption" data-lb-caption></p>
+    <div class="lb__meta">
+      <p class="lb__caption" data-lb-caption></p>
+      <p class="lb__details" data-lb-details hidden></p>
+    </div>
     <p class="lb__counter" data-lb-counter></p>
   </footer>
 </dialog>
@@ -182,6 +200,8 @@ const WIDTHS = [800, 1200, 1600, 2000];
     pointer-events: none;
   }
 
+  .lb__meta { min-width: 0; }
+
   .lb__caption,
   .lb__counter {
     margin: 0;
@@ -189,6 +209,20 @@ const WIDTHS = [800, 1200, 1600, 2000];
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--on-image-muted);
+  }
+
+  /* Shooting details sit under the title, quieter than it — present for anyone
+     who wants them, never competing with the photograph. */
+  .lb__details {
+    margin: 0.3rem 0 0;
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.5);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 46rem) {
+    .lb__details { font-size: 0.625rem; }
   }
 
   .lb__counter { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -209,6 +243,7 @@ const WIDTHS = [800, 1200, 1600, 2000];
 
     const caption = dialog.querySelector('[data-lb-caption]');
     const counter = dialog.querySelector('[data-lb-counter]');
+    const details = dialog.querySelector('[data-lb-details]');
     const stage = dialog.querySelector('[data-lb-stage]');
     let index = 0;
 
@@ -229,6 +264,14 @@ const WIDTHS = [800, 1200, 1600, 2000];
       const img = slides[index].querySelector('img');
       if (caption) caption.textContent = img ? img.getAttribute('alt') : '';
       if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+
+      if (details) {
+        const line = slides[index].dataset.details || '';
+        details.textContent = line;
+        // Hidden rather than blank, so a photo with no settings recorded does
+        // not leave an empty gap under its title.
+        details.hidden = !line;
+      }
     };
 
     const open = (photoId) => {

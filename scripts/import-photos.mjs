@@ -15,7 +15,8 @@
  *   npm run import -- --from "D:\Photos\test" --to animals --dry
  */
 import sharp from 'sharp';
-import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
+import exifReader from 'exif-reader';
+import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname, extname, basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -105,6 +106,72 @@ function watermarkSvg(width, height, text) {
   </svg>`);
 }
 
+// -------------------------------------------------------------------- exif
+/**
+ * Pulls the shooting details out of a photo's EXIF before the image is
+ * stripped.
+ *
+ * This is the whole reason the settings survive at all: the published copy has
+ * every tag removed so no GPS location escapes, which also destroys the camera
+ * settings. So they are read here and written to a small `_meta.json` beside
+ * the photos, and the site reads that instead of the image.
+ *
+ * Location tags are deliberately not read. They are not wanted, and anything
+ * not read cannot be written out by accident.
+ */
+function readShootingDetails(exifBuffer) {
+  if (!exifBuffer) return null;
+
+  let tags;
+  try {
+    tags = exifReader(exifBuffer);
+  } catch {
+    return null;
+  }
+
+  const image = tags.Image ?? {};
+  const photo = tags.Photo ?? {};
+
+  // Model usually already contains the manufacturer ("NIKON Z 6"), so only
+  // prefix the make when it does not.
+  const make = typeof image.Make === 'string' ? image.Make.trim() : '';
+  const model = typeof image.Model === 'string' ? image.Model.trim() : '';
+  let camera = model;
+  if (make && model && !model.toLowerCase().startsWith(make.toLowerCase().split(' ')[0])) {
+    camera = `${make} ${model}`;
+  }
+  if (!camera && make) camera = make;
+
+  const iso = Array.isArray(photo.ISOSpeedRatings)
+    ? photo.ISOSpeedRatings[0]
+    : photo.ISOSpeedRatings ?? photo.PhotographicSensitivity;
+
+  const shutter = (() => {
+    const t = photo.ExposureTime;
+    if (typeof t !== 'number' || t <= 0) return null;
+    // Photographers read fast shutters as fractions and slow ones as seconds.
+    return t >= 1 ? `${Number(t.toFixed(1))}s` : `1/${Math.round(1 / t)}s`;
+  })();
+
+  const taken = photo.DateTimeOriginal ?? photo.DateTimeDigitized ?? image.DateTime;
+  const year = taken instanceof Date && !Number.isNaN(taken.valueOf())
+    ? taken.getUTCFullYear()
+    : null;
+
+  const details = {
+    camera: camera || null,
+    lens: typeof photo.LensModel === 'string' ? photo.LensModel.trim() : null,
+    focal: typeof photo.FocalLength === 'number' ? `${Math.round(photo.FocalLength)}mm` : null,
+    aperture: typeof photo.FNumber === 'number' ? `f/${Number(photo.FNumber.toFixed(1))}` : null,
+    shutter,
+    iso: typeof iso === 'number' ? `ISO ${iso}` : null,
+    year,
+  };
+
+  // Nothing useful found — better to store nothing than a row of blanks.
+  return Object.values(details).some(Boolean) ? details : null;
+}
+
 // ------------------------------------------------------------------- names
 /** IMG_4821.JPG -> img-4821 ; "Golden Hour 3.jpg" -> golden-hour-3 */
 function slugify(name) {
@@ -161,10 +228,23 @@ async function main() {
 
   if (!args.dry) await mkdir(target, { recursive: true });
 
+  // Existing sidecar is merged into, not replaced, so importing a second batch
+  // into the same gallery does not wipe the first batch's details.
+  const metaPath = join(target, '_meta.json');
+  let sidecar = {};
+  if (existsSync(metaPath)) {
+    try {
+      sidecar = JSON.parse(await readFile(metaPath, 'utf8'));
+    } catch {
+      console.log('  (existing _meta.json was unreadable — starting a fresh one)');
+    }
+  }
+
   let totalIn = 0;
   let totalOut = 0;
   let done = 0;
   let hadGps = 0;
+  let withDetails = 0;
 
   for (const file of usable) {
     const source = join(from, file);
@@ -174,9 +254,12 @@ async function main() {
     const image = sharp(source, { failOn: 'none' });
     const meta = await image.metadata();
 
-    // sharp drops all metadata unless explicitly told to keep it, so simply
-    // not calling withMetadata() is what removes the GPS tag.
+    // Read the shooting details BEFORE the image is written, because writing
+    // it strips every tag. sharp drops all metadata unless explicitly told to
+    // keep it, so simply not calling withMetadata() is what removes the GPS.
+    const details = readShootingDetails(meta.exif);
     if (meta.exif) hadGps += 1;
+    if (details) withDetails += 1;
 
     const landscape = (meta.width ?? 0) >= (meta.height ?? 0);
     const resized = image
@@ -204,6 +287,9 @@ async function main() {
     const outBuf = await pipeline.jpeg({ quality: QUALITY, mozjpeg: true }).toBuffer();
     totalOut += outBuf.length;
 
+    if (details) sidecar[outName] = details;
+    else delete sidecar[outName];
+
     if (!args.dry) await writeFile(outPath, outBuf);
 
     done += 1;
@@ -212,8 +298,13 @@ async function main() {
     console.log(`  ${String(done).padStart(3)}. ${file}  ${mbIn}MB → ${outName}  ${mbOut}MB`);
   }
 
+  if (!args.dry && Object.keys(sidecar).length) {
+    await writeFile(metaPath, `${JSON.stringify(sidecar, null, 2)}\n`, 'utf8');
+  }
+
   const pct = totalIn ? Math.round((1 - totalOut / totalIn) * 100) : 0;
   console.log(`\n${done} photo(s) ${args.dry ? 'would be imported' : 'imported'}.`);
+  console.log(`  Camera settings kept for ${withDetails} photo(s) — shown under each photo full screen.`);
   console.log(`  ${(totalIn / 1024 / 1024).toFixed(0)}MB of originals → ${(totalOut / 1024 / 1024).toFixed(0)}MB published (${pct}% smaller)`);
   console.log(`  Metadata stripped from ${hadGps} file(s) that carried it — no GPS location is published.`);
   console.log(`  Your original files were not touched.`);

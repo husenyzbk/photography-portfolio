@@ -1,0 +1,65 @@
+{
+  "01-amal-in-window-light.jpg": {
+    "camera": "FUJIFILM X-T4",
+    "lens": "XF35mmF1.4 R",
+    "focal": "50mm",
+    "aperture": "f/5.6",
+    "shutter": "1/500s",
+    "iso": "ISO 400",
+    "year": 2025
+  },
+  "02-studio-no-4.jpg": {
+    "camera": "NIKON Z 6II",
+    "lens": "NIKKOR Z 24-70mm f/2.8 S",
+    "focal": "135mm",
+    "aperture": "f/8",
+    "shutter": "1/60s",
+    "iso": "ISO 800",
+    "year": 2023
+  },
+  "03-hands-and-coffee.jpg": {
+    "camera": "Canon EOS R6",
+    "lens": "RF85mm F1.2 L USM",
+    "focal": "24mm",
+    "aperture": "f/1.4",
+    "shutter": "1/500s",
+    "iso": "ISO 1600",
+    "year": 2024
+  },
+  "04-against-the-wall.jpg": {
+    "camera": "FUJIFILM X-T4",
+    "lens": "XF35mmF1.4 R",
+    "focal": "50mm",
+    "aperture": "f/1.8",
+    "shutter": "1/60s",
+    "iso": "ISO 3200",
+    "year": 2025
+  },
+  "05-laughing.jpg": {
+    "camera": "NIKON Z 6II",
+    "lens": "NIKKOR Z 24-70mm f/2.8 S",
+    "focal": "135mm",
+    "aperture": "f/2.8",
+    "shutter": "1/500s",
+    "iso": "ISO 100",
+    "year": 2023
+  },
+  "06-profile-in-shade.jpg": {
+    "camera": "Canon EOS R6",
+    "lens": "RF85mm F1.2 L USM",
+    "focal": "24mm",
+    "aperture": "f/4",
+    "shutter": "1/60s",
+    "iso": "ISO 200",
+    "year": 2024
+  },
+  "07-the-painter.jpg": {
+    "camera": "FUJIFILM X-T4",
+    "lens": "XF35mmF1.4 R",
+    "focal": "50mm",
+    "aperture": "f/5.6",
+    "shutter": "1/500s",
+    "iso": "ISO 400",
+    "year": 2025
+  }
+}

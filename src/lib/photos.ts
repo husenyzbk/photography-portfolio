@@ -1,5 +1,22 @@
 import type { ImageMetadata } from 'astro';
 
+/**
+ * Shooting details, as captured by the import tool.
+ *
+ * These live in a `_meta.json` beside the photos rather than inside the image
+ * files, because the published copies have every tag stripped so no GPS
+ * location can escape with them.
+ */
+export type ShootingDetails = {
+  camera?: string | null;
+  lens?: string | null;
+  focal?: string | null;
+  aperture?: string | null;
+  shutter?: string | null;
+  iso?: string | null;
+  year?: number | null;
+};
+
 export type Photo = {
   /** Astro image metadata — feeds <Image /> so derivatives get generated. */
   src: ImageMetadata;
@@ -11,6 +28,8 @@ export type Photo = {
   id: string;
   /** width / height — lets the grid reserve space before the image loads. */
   ratio: number;
+  /** Camera settings, when the original carried them. */
+  details?: ShootingDetails;
 };
 
 /**
@@ -31,18 +50,37 @@ function altFromFilename(file: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/**
+ * The sidecars written by the import tool, keyed by gallery path.
+ * `/src/photos/people/events/_meta.json` -> 'people/events'
+ */
+const metaFiles = import.meta.glob<{ default: Record<string, ShootingDetails> }>(
+  '/src/photos/**/_meta.json',
+  { eager: true },
+);
+
+const META = new Map<string, Record<string, ShootingDetails>>(
+  Object.entries(metaFiles).map(([file, mod]) => [
+    file.replace('/src/photos/', '').replace('/_meta.json', ''),
+    mod.default ?? {},
+  ]),
+);
+
 const ALL: Photo[] = Object.entries(files)
   .map(([file, mod]) => {
     const rel = file.replace('/src/photos/', '');
     const parts = rel.split('/');
     const path = parts.slice(0, -1);
+    const filename = parts[parts.length - 1];
     const src = mod.default;
+    const details = META.get(path.join('/'))?.[filename];
     return {
       src,
       path,
       alt: altFromFilename(file),
       id: rel.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase(),
       ratio: src.width / src.height,
+      details,
     };
   })
   // Stable, predictable order: alphabetical by file path.

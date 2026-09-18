@@ -104,11 +104,42 @@ function makeSvg(w, h, hues, seed) {
 
 const slug = (s) => s.replace(/\s+/g, '-').toLowerCase();
 
+/**
+ * Plausible shooting details, written to the same `_meta.json` the import tool
+ * produces, so the camera-info line in the viewer can be seen before the real
+ * photographs arrive.
+ *
+ * These are invented. Importing real photos overwrites them with the settings
+ * read from the files.
+ */
+const BODIES = [
+  { camera: 'NIKON Z 6II', lens: 'NIKKOR Z 24-70mm f/2.8 S' },
+  { camera: 'Canon EOS R6', lens: 'RF85mm F1.2 L USM' },
+  { camera: 'FUJIFILM X-T4', lens: 'XF35mmF1.4 R' },
+];
+const FOCALS = ['24mm', '35mm', '50mm', '85mm', '135mm', '200mm'];
+const APERTURES = ['f/1.4', 'f/1.8', 'f/2.8', 'f/4', 'f/5.6', 'f/8'];
+const SHUTTERS = ['1/2000s', '1/1000s', '1/500s', '1/250s', '1/125s', '1/60s'];
+const ISOS = ['ISO 100', 'ISO 200', 'ISO 400', 'ISO 800', 'ISO 1600', 'ISO 3200'];
+
+function fakeDetails(i, galleryIndex) {
+  const body = BODIES[(i + galleryIndex) % BODIES.length];
+  return {
+    camera: body.camera,
+    lens: body.lens,
+    focal: FOCALS[(i * 2 + galleryIndex) % FOCALS.length],
+    aperture: APERTURES[(i + galleryIndex * 2) % APERTURES.length],
+    shutter: SHUTTERS[(i * 3 + galleryIndex) % SHUTTERS.length],
+    iso: ISOS[(i + galleryIndex) % ISOS.length],
+    year: 2023 + ((i + galleryIndex) % 3),
+  };
+}
+
 async function main() {
   const fresh = process.argv.includes('--clean');
   let made = 0;
 
-  for (const gallery of GALLERIES) {
+  for (const [galleryIndex, gallery] of GALLERIES.entries()) {
     const dir = join(PHOTOS, ...gallery.path);
 
     if (fresh && existsSync(dir)) {
@@ -122,22 +153,28 @@ async function main() {
       continue;
     }
 
+    const sidecar = {};
+
     for (const [i, name] of gallery.names.entries()) {
       const shape = SHAPES[i % SHAPES.length];
       const svg = makeSvg(shape.w, shape.h, gallery.hues, i + gallery.path.length * 7);
-      const file = join(dir, `${String(i + 1).padStart(2, '0')}-${slug(name)}.jpg`);
+      const outName = `${String(i + 1).padStart(2, '0')}-${slug(name)}.jpg`;
+      const file = join(dir, outName);
 
       const buf = await sharp(Buffer.from(svg))
         .jpeg({ quality: 92, mozjpeg: true })
         .toBuffer();
 
       await writeFile(file, buf);
+      sidecar[outName] = fakeDetails(i, galleryIndex);
       made += 1;
       process.stdout.write(
         `  made  ${gallery.path.join('/')}/${String(i + 1).padStart(2, '0')}-${slug(name)}.jpg ` +
           `${shape.w}x${shape.h} ${(buf.length / 1024 / 1024).toFixed(1)}MB\n`,
       );
     }
+
+    await writeFile(join(dir, '_meta.json'), `${JSON.stringify(sidecar, null, 2)}\n`, 'utf8');
   }
 
   console.log(`\n${made} placeholder image${made === 1 ? '' : 's'} written to src/photos/`);

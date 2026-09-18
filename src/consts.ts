@@ -13,7 +13,7 @@ export const SITE = {
   tagline: 'Photography',
   description:
     'Photography by Hussein Yazbeck — animals, people and the outdoors.',
-  instagram: 'https://instagram.com/husenyzbk',
+  instagram: 'https://instagram.com/husenyzbk2',
 
   /**
    * The contact address, base64-encoded.

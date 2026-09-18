@@ -30,6 +30,20 @@ Run `npm run import` with no arguments to see the list of galleries.
 RAW and HEIC files cannot be read directly — export them as JPEG from your
 photo software first. The tool tells you if it finds any.
 
+### Camera settings
+
+The import tool reads the camera, lens, focal length, aperture, shutter, ISO
+and year out of each photo and writes them to a `_meta.json` beside the images.
+They appear under the photo when it is opened full screen.
+
+They have to be stored separately because the published copies have every tag
+stripped so no GPS location escapes — which destroys the settings too. Reading
+them first is what saves them. Location tags are never read, so they cannot be
+written out by accident.
+
+Photos with no settings recorded simply show nothing; no empty line appears.
+To hide the settings for one photo, delete its entry from `_meta.json`.
+
 ### Captions and ordering
 
 The filename becomes the caption (`golden-hour-ridge.jpg` → "Golden hour
