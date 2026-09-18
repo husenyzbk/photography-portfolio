@@ -8,9 +8,9 @@ interface Props {
 
 const { photos } = Astro.props;
 
-// Full-screen viewing tops out at 2400px — beyond that the file grows fast
-// and nobody can see the difference on a screen.
-const WIDTHS = [800, 1200, 1600, 2400];
+// Full-screen viewing tops out at 2000px: sharp on any screen, too small to
+// print well.
+const WIDTHS = [800, 1200, 1600, 2000];
 ---
 
 <dialog class="lb" aria-label="Photo viewer">
