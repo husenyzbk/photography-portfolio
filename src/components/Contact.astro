@@ -2,7 +2,8 @@
 import { SITE } from '../consts';
 ---
 
-<section class="contact shell" id="contact">
+<section class="contact panel" id="contact" style="--panel-z:4">
+  <div class="shell">
   <p class="eyebrow" data-reveal>Contact</p>
   <h2 class="contact__title" data-reveal style="--reveal-delay:100ms">Get in touch</h2>
   <p class="contact__intro" data-reveal style="--reveal-delay:160ms">
@@ -48,11 +49,10 @@ import { SITE } from '../consts';
       <p class="form__note" data-form-note role="status" aria-live="polite"></p>
     </div>
   </form>
+  </div>
 </section>
 
 <style>
-  .contact { padding-top: clamp(4rem, 14vh, 8rem); }
-
   .contact__title {
     font-family: var(--font-display);
     font-weight: 300;

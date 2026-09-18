@@ -140,6 +140,40 @@ h1, h2, h3 {
 }
 
 /* --------------------------------------------------------------------------
+   Stacked panels
+
+   Each panel pins to the top of the viewport and the next one scrolls up over
+   it, so a section always slides *behind* the one that follows. They are
+   siblings pinned at the same offset, ordered by --panel-z: the later a panel
+   comes, the higher it sits, so it covers the ones before it.
+
+   Two rules make it work:
+   - a panel must be at least one screen tall, or pinning it at the top leaves
+     the screen below it showing the panel underneath
+   - a panel must be opaque, or the pinned panels behind show through it
+-------------------------------------------------------------------------- */
+.panel {
+  position: sticky;
+  top: 0;
+  z-index: var(--panel-z, 1);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--bg);
+}
+
+/* Short screens cannot hold a section comfortably in one viewport, so the
+   panels become ordinary stacked sections. */
+@media (max-height: 40rem) {
+  .panel {
+    position: static;
+    min-height: 0;
+    display: block;
+  }
+}
+
+/* --------------------------------------------------------------------------
    Scroll reveal
    Only transform + opacity are animated, so these composite on the GPU and
    hold 60fps on a phone. Anything animating width/height/top would not.

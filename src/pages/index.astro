@@ -26,7 +26,7 @@ const og = hero
 <Base ogImage={og?.src} navOverImage={Boolean(hero)}>
   {
     hero && (
-      <section class="hero">
+      <section class="hero panel" style="--panel-z:1">
         <div class="hero__media">
           <Image
             src={hero.src}
@@ -68,15 +68,9 @@ const og = hero
     )
   }
 
-  {/*
-    Everything below the hero rides in one opaque slab. The hero is pinned
-    behind it, so scrolling slides this over the photograph rather than
-    scrolling the photograph away. The slab must be opaque and above the hero,
-    or the pinned image shows through it.
-  */}
-  <div class="page-body">
   {/* Replace this text with your own — see src/pages/index.astro */}
-  <section class="shell bio">
+  <section class="bio panel" style="--panel-z:2">
+    <div class="shell">
     <p class="eyebrow" data-reveal>About</p>
     <p class="bio__lead" data-reveal style="--reveal-delay:120ms">
       I'm an engineer in Paris who takes photos — mostly of
@@ -87,51 +81,44 @@ const og = hero
       reason I go places. Most of what is here was taken on foot, without a
       plan, waiting for something to happen.
     </p>
-  </section>
-
-  <section class="shell work">
-    <p class="eyebrow" data-reveal>Selected work</p>
-    <div class="work__grid">
-      {
-        CATEGORIES.map((category, i) => (
-          <CategoryCard
-            category={category}
-            path={[category.slug]}
-            cover={coverFor([category.slug])}
-            index={i}
-          />
-        ))
-      }
     </div>
   </section>
 
-  </div>
+  <section class="work panel" style="--panel-z:3">
+    <div class="shell">
+      <p class="eyebrow" data-reveal>Selected work</p>
+      <div class="work__grid">
+        {
+          CATEGORIES.map((category, i) => (
+            <CategoryCard
+              category={category}
+              path={[category.slug]}
+              cover={coverFor([category.slug])}
+              index={i}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
 
-  {/* Rides in the layout's reveal block, behind the page. */}
-  <Contact slot="reveal" />
+  <Contact />
 </Base>
 
 <style>
   /* ---------------------------------------------------------------- hero */
-  /* Pinned to the top of the viewport for as long as the page scrolls past it,
-     so the content below slides over the photograph instead of pushing it up.
-     z-index 0 puts it behind .page-body. */
+  /* Pinning comes from .panel. The hero only adds its own framing: a fixed
+     screen height and a clipped, full-bleed photograph. */
   .hero {
-    position: sticky;
-    top: 0;
-    z-index: 0;
-    /* 100svh rather than vh: on mobile browsers vh includes the collapsing
-       address bar, which makes the hero jump as you scroll. */
-    height: 100svh;
-    min-height: 32rem;
+    /* max() rather than a bare 32rem: a component-scoped rule outranks the
+       shared .panel selector, so a plain min-height here would override the
+       panel's full-screen height and leave the hero a half-screen band. The
+       32rem floor still applies on short screens, where panels go static. */
+    min-height: max(32rem, 100svh);
     overflow: hidden;
-  }
-
-  /* The slab that slides over the hero. Opaque, and above it. */
-  .page-body {
-    position: relative;
-    z-index: 1;
-    background: var(--bg);
+    /* The photo fills the panel rather than being centred inside it. */
+    justify-content: flex-start;
+    background: none;
   }
 
   .hero__media { position: absolute; inset: 0; }
@@ -223,8 +210,6 @@ const og = hero
   }
 
   /* ----------------------------------------------------------------- bio */
-  .bio { padding-top: clamp(4rem, 14vh, 8rem); }
-
   /* Width is limited on the paragraphs, not on the section — so the bio starts
      at the same left edge as everything else rather than floating in the
      middle of the page. */
@@ -247,8 +232,6 @@ const og = hero
   }
 
   /* ---------------------------------------------------------------- work */
-  .work { padding-top: clamp(4rem, 12vh, 7rem); }
-
   .work__grid {
     display: grid;
     gap: clamp(1.5rem, 4vw, 2.5rem);
