@@ -85,6 +85,8 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
         position: relative;
         z-index: 2;
         background: var(--bg);
+        /* Matches the panels — it slides over the last one. */
+        box-shadow: 0 -18px 40px -14px rgba(48, 36, 20, 0.3);
       }
     </style>
 
