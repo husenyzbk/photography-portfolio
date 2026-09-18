@@ -15,7 +15,8 @@ interface Props {
 
 const { category, path, cover, index = 0 } = Astro.props;
 const count = photosIn(path).length;
-const label = count === 1 ? '1 photo' : `${count} photos`;
+// "0 photos" reads as a fault rather than as work in progress.
+const label = count === 0 ? 'Coming soon' : count === 1 ? '1 photo' : `${count} photos`;
 ---
 
 <a
@@ -76,8 +77,15 @@ const label = count === 1 ? '1 photo' : `${count} photos`;
     transition: transform 1s var(--ease);
   }
 
+  /* Shown when a gallery has no photographs yet. A quiet tint of the page,
+     not the near-black this used to be — that was written for the original
+     dark palette and read as a hole punched in the beige. */
   .card__placeholder {
-    background: linear-gradient(140deg, #16161a, #0f0f12);
+    background:
+      linear-gradient(140deg,
+        color-mix(in srgb, var(--bg-raised) 70%, var(--bg)),
+        var(--bg-raised));
+    border: 1px solid color-mix(in srgb, var(--fg) 7%, transparent);
   }
 
   @media (hover: hover) {

@@ -122,13 +122,13 @@ const og = cover
     )
   }
 
+  {/* An empty gallery is a normal state now, and this text is read by
+      visitors — so it says something to a visitor, rather than telling them
+      which source folder to put files in. */}
   {
     children.length === 0 && photos.length === 0 && (
       <section class="shell empty">
-        <p class="empty__body">
-          Nothing here yet. Add images to{' '}
-          <code>src/photos/{segments.join('/')}/</code> and they appear automatically.
-        </p>
+        <p class="empty__body">This gallery is still being put together. Please check back.</p>
       </section>
     )
   }
