@@ -29,6 +29,16 @@ function detailLine(photo: Photo): string {
 ---
 
 <dialog class="lb" aria-label="Photo viewer">
+  {/*
+    The blurred wash behind the photo. Two layers so one can fade in while the
+    other fades out, which is what makes paging between photos a crossfade
+    rather than a hard cut.
+  */}
+  <div class="lb__wash" aria-hidden="true">
+    <div class="lb__wash-layer" data-wash-layer></div>
+    <div class="lb__wash-layer" data-wash-layer></div>
+  </div>
+
   <button class="lb__close" type="button" data-lb-close data-press="subtle" aria-label="Close viewer">
     <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
       <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.4" fill="none" />
@@ -112,9 +122,47 @@ function detailLine(photo: Photo): string {
   }
   @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
 
+  /* ------------------------------------------------------------- the wash */
+  .lb__wash {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  /* Inset negatively and scaled up: a blur samples beyond its own edges, so a
+     layer sized exactly to the screen would show pale, washed-out borders. */
+  .lb__wash-layer {
+    position: absolute;
+    inset: -8%;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.12);
+    filter: blur(44px) saturate(150%);
+    opacity: 0;
+    transition: opacity 0.55s var(--ease);
+    will-change: opacity;
+  }
+
+  .lb__wash-layer.is-on { opacity: 0.55; }
+
+  /* Darkens the wash so it stays a backdrop. Without it the blurred colours
+     compete with the photograph and both lose. */
+  .lb__wash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 8, 10, 0.52);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lb__wash-layer { transition: none; }
+  }
+
   .lb__stage {
     position: absolute;
     inset: 0;
+    z-index: 1;
     display: grid;
     /* An explicit minmax(0,1fr) track is what makes the row a *definite*
        height. With an auto row, the slide's height:100% cannot resolve and
@@ -185,7 +233,7 @@ function detailLine(photo: Photo): string {
   .lb__close,
   .lb__nav {
     position: absolute;
-    z-index: 2;
+    z-index: 3;
     display: grid;
     place-items: center;
     width: 3rem;
@@ -213,6 +261,7 @@ function detailLine(photo: Photo): string {
 
   .lb__bar {
     position: absolute;
+    z-index: 2;
     left: 0;
     right: 0;
     bottom: 0;
@@ -271,7 +320,39 @@ function detailLine(photo: Photo): string {
     const counter = dialog.querySelector('[data-lb-counter]');
     const details = dialog.querySelector('[data-lb-details]');
     const stage = dialog.querySelector('[data-lb-stage]');
+    const washLayers = Array.from(dialog.querySelectorAll('[data-wash-layer]'));
+    let washTurn = 0;
     let index = 0;
+
+    /**
+     * Paints the blurred wash behind the photo.
+     *
+     * The source is the *thumbnail* already on the page behind the viewer, not
+     * the full-size photo: it is a few tens of kilobytes, already downloaded
+     * and decoded, and blurred beyond recognition anyway — so the wash costs no
+     * network at all. Reading `currentSrc` gets whichever variant the browser
+     * actually chose for this screen.
+     *
+     * The two layers alternate, one fading up as the other fades down, so
+     * swiping crossfades instead of cutting.
+     */
+    const paintWash = (photoId) => {
+      if (!washLayers.length) return;
+
+      const thumb = document.querySelector(
+        `[data-lightbox-open][data-photo-id="${photoId}"] img`,
+      );
+      const src = thumb?.currentSrc || thumb?.src;
+      if (!src) return;
+
+      const incoming = washLayers[washTurn % washLayers.length];
+      const outgoing = washLayers[(washTurn + 1) % washLayers.length];
+
+      incoming.style.backgroundImage = `url("${src}")`;
+      incoming.classList.add('is-on');
+      outgoing.classList.remove('is-on');
+      washTurn += 1;
+    };
 
     const show = (next) => {
       index = (next + slides.length) % slides.length;
@@ -286,6 +367,8 @@ function detailLine(photo: Photo): string {
         slide.classList.toggle('is-near', near);
         slide.classList.toggle('is-active', i === index);
       });
+
+      paintWash(slides[index].dataset.photoId);
 
       const img = slides[index].querySelector('img');
       if (caption) caption.textContent = img ? img.getAttribute('alt') : '';
