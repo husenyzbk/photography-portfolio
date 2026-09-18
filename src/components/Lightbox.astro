@@ -16,7 +16,13 @@ const WIDTHS = [800, 1200, 1600, 2000];
 function detailLine(photo: Photo): string {
   const d = photo.details;
   if (!d) return '';
-  return [d.camera, d.lens, d.focal, d.aperture, d.shutter, d.iso, d.year]
+
+  // Some lenses are named after nothing but their focal length ("50mm"), which
+  // then reads as "50mm · 50mm" next to the focal length itself. Drop the lens
+  // when it adds nothing the focal length is not already saying.
+  const lens = d.lens && d.lens.trim() !== (d.focal ?? '').trim() ? d.lens : null;
+
+  return [d.camera, lens, d.focal, d.aperture, d.shutter, d.iso, d.year]
     .filter(Boolean)
     .join('  ·  ');
 }
