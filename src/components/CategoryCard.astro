@@ -22,6 +22,7 @@ const label = count === 1 ? '1 photo' : `${count} photos`;
   class="card"
   href={href(...path)}
   data-reveal
+  data-press
   style={`--reveal-delay:${index * 90}ms`}
 >
   <div class="card__media">
@@ -62,6 +63,9 @@ const label = count === 1 ? '1 photo' : `${count} photos`;
     overflow: hidden;
     aspect-ratio: 4 / 5;
     background: var(--bg-raised);
+    /* Rounded here, but deliberately NOT on the photos inside a gallery —
+       those sit edge to edge and rounding would break the grid. */
+    border-radius: var(--radius);
   }
 
   .card__img,

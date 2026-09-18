@@ -67,6 +67,20 @@ const og = hero
     )
   }
 
+  {/* Replace this text with your own — see src/pages/index.astro */}
+  <section class="shell bio">
+    <p class="eyebrow" data-reveal>About</p>
+    <p class="bio__lead" data-reveal style="--reveal-delay:120ms">
+      I am a mechanical engineer in Beirut who takes photographs — mostly of
+      animals, people, and whatever the outdoors puts in front of me.
+    </p>
+    <p class="bio__body" data-reveal style="--reveal-delay:220ms">
+      The camera started as something to do on weekends and turned into the
+      reason I go places. Most of what is here was taken on foot, without a
+      plan, waiting for something to happen.
+    </p>
+  </section>
+
   <section class="shell work">
     <p class="eyebrow" data-reveal>Selected work</p>
     <div class="work__grid">
@@ -97,7 +111,16 @@ const og = hero
     overflow: hidden;
   }
 
-  .hero__media { position: absolute; inset: 0; }
+  /* Parallax: the photo drifts down more slowly than the page scrolls, so the
+     hero and the content below feel like one continuous space instead of two
+     stacked panels. --p is 0 at the top and 1 once the hero has scrolled by;
+     it is set from JS in one rAF-throttled handler. */
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    transform: translate3d(0, calc(var(--p, 0) * 12vh), 0);
+    will-change: transform;
+  }
 
   .hero__img {
     width: 100%;
@@ -112,12 +135,21 @@ const og = hero
     to { transform: scale(1); opacity: 1; }
   }
 
+  /* The hero does not stop, it dissolves. The lower gradient reaches the page
+     background colour exactly at the bottom edge, so there is no visible seam
+     where the photo ends and the page begins. */
   .hero__scrim {
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(to top, rgba(11, 11, 12, 0.85) 0%, rgba(11, 11, 12, 0) 45%),
-      linear-gradient(to bottom, rgba(11, 11, 12, 0.5) 0%, rgba(11, 11, 12, 0) 30%);
+      linear-gradient(
+        to top,
+        var(--bg) 0%,
+        color-mix(in srgb, var(--bg) 82%, transparent) 14%,
+        color-mix(in srgb, var(--bg) 35%, transparent) 38%,
+        transparent 62%
+      ),
+      linear-gradient(to bottom, color-mix(in srgb, var(--bg) 55%, transparent) 0%, transparent 28%);
   }
 
   .hero__content {
@@ -125,6 +157,10 @@ const og = hero
     left: 0;
     right: 0;
     bottom: clamp(3rem, 10vh, 6rem);
+    /* The title lifts away and fades as you scroll into the page. */
+    opacity: calc(1 - var(--p, 0) * 1.6);
+    transform: translate3d(0, calc(var(--p, 0) * -6vh), 0);
+    will-change: transform, opacity;
   }
 
   .hero__title {
@@ -155,7 +191,8 @@ const og = hero
     width: 1px;
     height: 3rem;
     overflow: hidden;
-    opacity: 0.55;
+    /* Disappears as soon as you start scrolling — it has done its job. */
+    opacity: calc(0.55 - var(--p, 0) * 2);
   }
 
   .hero__cue-line {
@@ -171,6 +208,28 @@ const og = hero
     0% { transform: scaleY(0) translateY(0); }
     40% { transform: scaleY(1) translateY(0); }
     100% { transform: scaleY(1) translateY(100%); }
+  }
+
+  /* ----------------------------------------------------------------- bio */
+  .bio { padding-top: clamp(4rem, 14vh, 8rem); }
+
+  /* Width is limited on the paragraphs, not on the section — so the bio starts
+     at the same left edge as everything else rather than floating in the
+     middle of the page. */
+  .bio__lead {
+    margin: 1.25rem 0 0;
+    max-width: var(--measure);
+    font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--fg);
+  }
+
+  .bio__body {
+    margin: 1rem 0 0;
+    max-width: var(--measure);
+    color: var(--fg-muted);
+    font-size: 1rem;
   }
 
   /* ---------------------------------------------------------------- work */
@@ -193,4 +252,51 @@ const og = hero
     border-radius: 3px;
     font-size: 0.9em;
   }
+
+  /* The parallax is decoration. Switch it off and the hero simply sits still. */
+  @media (prefers-reduced-motion: reduce) {
+    .hero__media,
+    .hero__content { transform: none; }
+    .hero__content { opacity: 1; }
+  }
 </style>
+
+<script>
+  /**
+   * Drives the hero parallax by writing a single 0→1 progress value onto the
+   * hero element. Everything else — the drift, the fading title, the scroll
+   * cue — is plain CSS reading that one variable.
+   *
+   * One rAF-throttled handler for the whole effect: reading scrollY on every
+   * scroll event and writing styles directly would force layout dozens of
+   * times a second and stutter on a phone.
+   */
+  const setupParallax = () => {
+    const hero = document.querySelector('.hero') as HTMLElement | null;
+    if (!hero) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+
+    const update = () => {
+      const height = hero.offsetHeight || 1;
+      const progress = Math.min(1, Math.max(0, window.scrollY / height));
+      hero.style.setProperty('--p', progress.toFixed(4));
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+  };
+
+  setupParallax();
+  document.addEventListener('astro:page-load', setupParallax);
+</script>

@@ -4,38 +4,42 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="footer">
-  <hr class="rule" />
   <div class="shell footer__inner">
     <p class="footer__copy">© {year} {SITE.title}</p>
-    <a class="footer__link" href={SITE.instagram} rel="me noopener" target="_blank">
-      Instagram
-    </a>
   </div>
 </footer>
 
 <style>
-  .footer { margin-top: clamp(4rem, 12vh, 8rem); }
+  .footer {
+    position: relative;
+    margin-top: clamp(5rem, 14vh, 9rem);
+    /* No rule, no hard edge. The footer sits on a gradient that grows out of
+       the page background, so the eye reads a gradual settling rather than a
+       band stacked below the content. */
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in srgb, var(--bg-raised) 55%, transparent) 60%,
+      color-mix(in srgb, var(--bg-raised) 80%, transparent) 100%
+    );
+  }
 
   .footer__inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding-block: 2rem;
-    /* Keeps the last line clear of the iPhone home indicator. */
+    justify-content: center;
+    padding-top: clamp(3rem, 8vh, 5rem);
+    padding-bottom: 2rem;
+    /* Keeps the last line clear of the iPhone home indicator, and clear of the
+       floating Instagram button in the corner. */
     padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
   }
 
-  .footer__copy,
-  .footer__link {
+  .footer__copy {
     margin: 0;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--fg-faint);
   }
-
-  .footer__link { transition: color var(--dur-fast) var(--ease); }
-  .footer__link:hover { color: var(--fg); }
 </style>

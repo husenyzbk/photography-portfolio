@@ -14,19 +14,19 @@ const WIDTHS = [800, 1200, 1600, 2000];
 ---
 
 <dialog class="lb" aria-label="Photo viewer">
-  <button class="lb__close" type="button" data-lb-close aria-label="Close viewer">
+  <button class="lb__close" type="button" data-lb-close data-press="subtle" aria-label="Close viewer">
     <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
       <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.4" fill="none" />
     </svg>
   </button>
 
-  <button class="lb__nav lb__nav--prev" type="button" data-lb-prev aria-label="Previous photo">
+  <button class="lb__nav lb__nav--prev" type="button" data-lb-prev data-press="subtle" aria-label="Previous photo">
     <svg viewBox="0 0 24 24" aria-hidden="true" width="26" height="26">
       <path d="M15 4L7 12l8 8" stroke="currentColor" stroke-width="1.4" fill="none" />
     </svg>
   </button>
 
-  <button class="lb__nav lb__nav--next" type="button" data-lb-next aria-label="Next photo">
+  <button class="lb__nav lb__nav--next" type="button" data-lb-next data-press="subtle" aria-label="Next photo">
     <svg viewBox="0 0 24 24" aria-hidden="true" width="26" height="26">
       <path d="M9 4l8 8-8 8" stroke="currentColor" stroke-width="1.4" fill="none" />
     </svg>

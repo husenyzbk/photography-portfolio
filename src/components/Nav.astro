@@ -8,7 +8,7 @@ const isActive = (slug: string) => current.includes(`/${slug}`);
 
 <header class="nav">
   <div class="shell nav__inner">
-    <a class="nav__brand" href={href()}>
+    <a class="nav__brand" href={href()} data-press="subtle" aria-label="Home">
       <span class="nav__name">{SITE.title}</span>
       <span class="nav__tagline">{SITE.tagline}</span>
     </a>
@@ -21,6 +21,7 @@ const isActive = (slug: string) => current.includes(`/${slug}`);
               <a
                 href={href(c.slug)}
                 class:list={['nav__link', { 'is-active': isActive(c.slug) }]}
+                data-press="subtle"
                 aria-current={isActive(c.slug) ? 'page' : undefined}
               >
                 {c.name}
@@ -41,16 +42,26 @@ const isActive = (slug: string) => current.includes(`/${slug}`);
     /* The bar sits under the phone's status area on notched devices unless the
        inset is added to its own padding. */
     padding-top: env(safe-area-inset-top, 0px);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: saturate(140%) blur(14px);
-    -webkit-backdrop-filter: saturate(140%) blur(14px);
-    border-bottom: 1px solid transparent;
-    transition: border-color var(--dur-fast) var(--ease);
+
+    /* No border and no backdrop blur. A blur has a hard boundary wherever its
+       element ends, which is exactly the stacked-band edge we are getting rid
+       of. A gradient that fades to nothing has no edge to see. */
+    /* The wash stays at full strength through the band the text occupies, then
+       fades out below it. Fading across the whole height instead would let
+       page content scroll up behind the words and collide with them. */
+    padding-bottom: 0.85rem;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--bg) var(--nav-strength, 40%), transparent) 0%,
+      color-mix(in srgb, var(--bg) var(--nav-strength, 40%), transparent) 64%,
+      transparent 100%
+    );
+    transition: background 0.4s var(--ease);
   }
 
-  /* Rule only appears once the page has scrolled, so the nav is invisible
-     over the hero and defined everywhere else. */
-  :global(body.is-scrolled) .nav { border-bottom-color: var(--rule); }
+  /* Once scrolled, the wash becomes opaque so the links stay readable over
+     whatever passes beneath — still with no line anywhere. */
+  :global(body.is-scrolled) .nav { --nav-strength: 100%; }
 
   .nav__inner {
     display: flex;

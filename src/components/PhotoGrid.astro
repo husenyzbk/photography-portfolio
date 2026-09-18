@@ -103,6 +103,20 @@ const SIZES = '(max-width: 46rem) 100vw, (max-width: 80rem) 45vw, 30vw';
     .tile:hover .tile__img { transform: scale(1.04); }
   }
 
+  /* Pressing a photo dips the image rather than the tile. Shrinking the tile
+     itself would open gaps in the justified row and shift its neighbours. */
+  .tile__btn:active .tile__img {
+    transform: scale(0.985);
+    filter: brightness(0.9);
+    transition:
+      transform var(--dur-press) var(--ease-press),
+      filter var(--dur-press) var(--ease-press);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile__btn:active .tile__img { transform: none; }
+  }
+
   /* On a phone the justified rows collapse to one photo per row: full-bleed
      portrait photos are the right call on a small screen, and it keeps every
      image comfortably large. */

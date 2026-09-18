@@ -1,0 +1,83 @@
+---
+import { SITE } from '../consts';
+---
+
+<a
+  class="ig"
+  href={SITE.instagram}
+  target="_blank"
+  rel="me noopener"
+  aria-label="Instagram"
+  data-press="subtle"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+    <rect
+      x="2.75"
+      y="2.75"
+      width="18.5"
+      height="18.5"
+      rx="5.25"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+    />
+    <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.6" />
+    <circle cx="17.4" cy="6.6" r="1.25" fill="currentColor" />
+  </svg>
+</a>
+
+<style>
+  .ig {
+    position: fixed;
+    z-index: 40;
+    right: clamp(1rem, 3vw, 2rem);
+    /* Sits above the iPhone home indicator rather than under it. */
+    bottom: calc(clamp(1rem, 3vw, 2rem) + env(safe-area-inset-bottom, 0px));
+
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: var(--radius-pill);
+
+    color: var(--fg);
+    background: color-mix(in srgb, var(--bg-raised) 78%, transparent);
+    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+
+    transition:
+      transform var(--dur-press) var(--ease-press),
+      filter var(--dur-press) var(--ease-press),
+      background var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease),
+      opacity 0.5s var(--ease);
+
+    /* Fades in once the page has settled rather than popping in mid-load. */
+    animation: ig-in 0.7s var(--ease) 0.9s both;
+  }
+
+  @keyframes ig-in {
+    from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.9); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @media (hover: hover) {
+    .ig:hover {
+      background: color-mix(in srgb, var(--fg) 92%, transparent);
+      color: var(--bg);
+      border-color: transparent;
+    }
+  }
+
+  .ig svg { display: block; }
+
+  @media (max-width: 34rem) {
+    .ig { width: 3rem; height: 3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ig { animation: none; }
+  }
+</style>

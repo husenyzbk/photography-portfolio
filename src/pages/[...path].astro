@@ -65,15 +65,31 @@ const og = cover
 >
   <header class="shell head">
     <nav class="crumbs" aria-label="Breadcrumb">
-      <a href={href()}>Index</a>
-      {
-        parent && (
-          <>
-            <span aria-hidden="true">/</span>
-            <a href={href(parent.slug)}>{parent.name}</a>
-          </>
-        )
-      }
+      {/* Back goes one level up — to the parent gallery if there is one,
+          otherwise home. Home is always reachable separately. */}
+      <a
+        class="crumb crumb--back"
+        href={parent ? href(parent.slug) : href()}
+        data-press
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+          <path d="M15 4L7 12l8 8" stroke="currentColor" stroke-width="1.8" fill="none" />
+        </svg>
+        <span>{parent ? parent.name : 'Back'}</span>
+      </a>
+
+      <a class="crumb" href={href()} data-press>
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15">
+          <path
+            d="M4 11l8-6.5 8 6.5M6.5 9.5V19h11V9.5"
+            stroke="currentColor"
+            stroke-width="1.6"
+            fill="none"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>Home</span>
+      </a>
     </nav>
 
     <h1 class="head__title">{category.name}</h1>
@@ -126,16 +142,45 @@ const og = cover
 
   .crumbs {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    font-size: 0.6875rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--fg-faint);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
-  .crumbs a { transition: color var(--dur-fast) var(--ease); }
-  .crumbs a:hover { color: var(--fg); }
+  .crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--fg) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
+    color: var(--fg-muted);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition:
+      color var(--dur-fast) var(--ease),
+      background var(--dur-fast) var(--ease),
+      transform var(--dur-press) var(--ease-press),
+      filter var(--dur-press) var(--ease-press);
+  }
+
+  .crumb svg { display: block; flex: none; }
+
+  @media (hover: hover) {
+    .crumb:hover {
+      color: var(--fg);
+      background: color-mix(in srgb, var(--fg) 12%, transparent);
+    }
+  }
+
+  /* The arrow slides back a touch on hover — a small cue that it moves you
+     backwards through the site. */
+  .crumb--back svg {
+    transition: transform var(--dur-fast) var(--ease);
+  }
+  .crumb--back:hover svg { transform: translateX(-2px); }
 
   .head__title {
     font-size: clamp(2rem, 7vw, 4rem);

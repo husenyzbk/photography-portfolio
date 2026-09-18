@@ -16,9 +16,19 @@
   --gutter: clamp(1.25rem, 4vw, 3.5rem);
   --shell: 88rem;
 
+  /* Softened corners everywhere except inside a gallery, where photos sit
+     edge to edge and rounding would break the grid. */
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* A shorter, snappier curve for press feedback — the finger has already
+     lifted by the time a slow ease finishes, which reads as lag. */
+  --ease-press: cubic-bezier(0.3, 0.8, 0.4, 1);
   --dur: 0.6s;
   --dur-fast: 0.28s;
+  --dur-press: 0.12s;
 
   --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text",
     "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -109,6 +119,69 @@ h1, h2, h3 {
 /* Once revealed, drop the compositing hint so long galleries don't pin
    hundreds of layers in memory. */
 [data-reveal].reveal-done { will-change: auto; }
+
+/* --------------------------------------------------------------------------
+   Press feedback
+
+   Anything tappable gets the same physical response: it sinks slightly under
+   the finger and springs back. Scale + translate only, so it composites on the
+   GPU and stays smooth on a phone.
+
+   `touch-action: manipulation` removes the 300ms tap delay mobile browsers add
+   while they wait to see if you meant to double-tap — without it the press
+   animation always feels a beat late.
+-------------------------------------------------------------------------- */
+button,
+[data-press] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-press] {
+  transition:
+    transform var(--dur-press) var(--ease-press),
+    filter var(--dur-press) var(--ease-press);
+}
+
+[data-press]:active {
+  transform: scale(0.975) translate3d(0, 1px, 0);
+  filter: brightness(0.94);
+}
+
+/* A control that is already small (an icon button) needs a shallower press or
+   it looks like it is collapsing rather than depressing. */
+[data-press='subtle']:active {
+  transform: scale(0.92);
+  filter: none;
+}
+
+/* An element that both reveals on scroll and responds to presses has two
+   systems wanting to drive `transform`. While it is revealing, the slow curve
+   wins; once the reveal has finished (.reveal-done is set on transitionend)
+   it switches to the snappy press curve. Without this the press feels laggy,
+   because it would inherit the reveal's 0.6s timing. */
+[data-reveal][data-press] {
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease),
+    filter var(--dur-press) var(--ease-press);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal][data-press].reveal-done {
+  transition:
+    transform var(--dur-press) var(--ease-press),
+    filter var(--dur-press) var(--ease-press);
+  transition-delay: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-press]:active,
+  [data-press='subtle']:active {
+    transform: none;
+    filter: brightness(0.9);
+  }
+}
 
 /* --------------------------------------------------------------------------
    Accessibility
