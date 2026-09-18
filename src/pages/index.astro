@@ -1,10 +1,10 @@
 ---
-import { Image, getImage } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import Contact from '../components/Contact.astro';
 import { CATEGORIES, SITE } from '../consts';
-import { allPhotos, coverFor, heroPhoto } from '../lib/photos';
+import { allPhotos, coverFor, heroPhoto, heroMobilePhoto } from '../lib/photos';
 
 const photos = allPhotos();
 
@@ -12,6 +12,26 @@ const photos = allPhotos();
 // photo on the site, which is why the hero currently doubles as a category
 // cover and changes whenever an earlier-sorting photo is imported.
 const hero = heroPhoto() ?? photos[0];
+
+/*
+  A phone may have its own hero, which needs a real <picture> with a media
+  condition: Astro's <Image> can resize one photograph, but choosing a
+  *different* photograph per screen is art direction, and only <source media>
+  does that. So the variants are generated here and the markup written by hand.
+
+  The phone's widths stop at 1200: a portrait phone is rarely more than 430
+  CSS px across, so 1200 already covers a 3x screen and anything beyond it is
+  downloaded and thrown away.
+*/
+const heroMobile = heroMobilePhoto();
+
+const heroDesktopAvif = hero
+  ? await getImage({ src: hero.src, widths: [640, 1024, 1600, 2000], format: 'avif', quality: 64 })
+  : undefined;
+
+const heroMobileAvif = heroMobile
+  ? await getImage({ src: heroMobile.src, widths: [480, 800, 1200], format: 'avif', quality: 64 })
+  : undefined;
 
 // The link-preview image: what renders when the Instagram bio link gets
 // shared or unfurled elsewhere. 1200x630 is the size every platform crops to.
@@ -32,18 +52,33 @@ const og = hero
     hero && (
       <section class="hero panel" style="--panel-z:1">
         <div class="hero__media">
-          <Image
-            src={hero.src}
-            alt={hero.alt}
-            widths={[640, 1024, 1600, 2000]}
-            sizes="100vw"
-            format="avif"
-            quality={64}
-            loading="eager"
-            fetchpriority="high"
-            decoding="sync"
-            class="hero__img"
-          />
+          <picture>
+            {
+              heroMobileAvif && (
+                <source
+                  media="(max-width: 46rem)"
+                  srcset={heroMobileAvif.srcSet.attribute}
+                  sizes="100vw"
+                  type="image/avif"
+                />
+              )
+            }
+            <source
+              srcset={heroDesktopAvif.srcSet.attribute}
+              sizes="100vw"
+              type="image/avif"
+            />
+            <img
+              src={heroDesktopAvif.src}
+              alt={hero.alt}
+              width={hero.src.width}
+              height={hero.src.height}
+              loading="eager"
+              fetchpriority="high"
+              decoding="sync"
+              class="hero__img"
+            />
+          </picture>
         </div>
 
         <div class="hero__scrim" />

@@ -99,8 +99,26 @@ const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
   { eager: true },
 );
 
-export function heroPhoto(): Photo | undefined {
-  const entries = Object.entries(heroFiles).sort(([a], [b]) => a.localeCompare(b));
+/**
+ * The phone's hero, if one has been set.
+ *
+ * A single glob star does not descend into folders, so the desktop glob above
+ * cannot see this one — the two never collide.
+ *
+ * Worth having separately because a wide photograph on a tall phone screen has
+ * to be cropped to a narrow slice of itself, which usually throws away the
+ * subject. A portrait frame chosen for the phone keeps it.
+ */
+const heroMobileFiles = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/hero/mobile/*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,avif}',
+  { eager: true },
+);
+
+function firstOf(
+  files: Record<string, { default: ImageMetadata }>,
+  id: string,
+): Photo | undefined {
+  const entries = Object.entries(files).sort(([a], [b]) => a.localeCompare(b));
   if (!entries.length) return undefined;
 
   const [file, mod] = entries[0];
@@ -109,9 +127,17 @@ export function heroPhoto(): Photo | undefined {
     src,
     path: [],
     alt: altFromFilename(file),
-    id: 'hero',
+    id,
     ratio: src.width / src.height,
   };
+}
+
+export function heroPhoto(): Photo | undefined {
+  return firstOf(heroFiles, 'hero');
+}
+
+export function heroMobilePhoto(): Photo | undefined {
+  return firstOf(heroMobileFiles, 'hero-mobile');
 }
 
 /** Photos in a gallery, or — for a parent like "people" — all of its children. */

@@ -83,12 +83,16 @@ Options
 
 Galleries
 ${galleries.map((g) => `  ${g}`).join('\n')}
-  hero                (not a gallery — the single front-page photograph)
+
+Front page (not galleries — one photograph each)
+  hero                shown on computers, and on phones if no phone one is set
+  hero-mobile         shown on phones; use a portrait frame here
 
 Examples
   npm run import -- --from "D:\\Photos\\safari" --to animals
   npm run import -- --from "D:\\Photos\\wedding" --to people/events --watermark
   npm run import -- --from "D:\\Photos\\chosen" --to hero
+  npm run import -- --from "D:\\Photos\\chosen-tall" --to hero-mobile
 `);
 }
 
@@ -205,8 +209,10 @@ async function main() {
   // "hero" is not a gallery. It is a single photograph belonging to no
   // category, so it lives outside src/photos where the galleries cannot see
   // it, and importing one replaces the previous rather than adding to it.
-  const isHero = args.to.toLowerCase() === 'hero';
-  const target = isHero ? HERO : join(PHOTOS, ...args.to.split(/[/\\]/));
+  const to = args.to.toLowerCase();
+  const isHeroMobile = to === 'hero-mobile' || to === 'hero/mobile';
+  const isHero = to === 'hero' || isHeroMobile;
+  const target = isHeroMobile ? join(HERO, 'mobile') : isHero ? HERO : join(PHOTOS, ...args.to.split(/[/\\]/));
 
   if (!isHero && !galleries.includes(args.to.replace(/\\/g, '/'))) {
     console.log(`\nNote: "${args.to}" is not one of the existing galleries.`);
@@ -251,7 +257,13 @@ async function main() {
     }
   }
 
-  console.log(`\n${usable.length} photo(s) → ${isHero ? 'the hero' : args.to}`);
+  const targetLabel = isHeroMobile
+    ? 'the hero shown on phones'
+    : isHero
+      ? 'the hero shown on computers'
+      : args.to;
+
+  console.log(`\n${usable.length} photo(s) → ${targetLabel}`);
   console.log(`Shrinking to ${MAX_EDGE}px, removing all metadata including GPS${args.watermark ? ', adding watermark' : ''}.`);
   if (args.dry) console.log('DRY RUN — nothing will be written.');
   console.log('');
@@ -342,8 +354,11 @@ async function main() {
   console.log(`  Your original files were not touched.`);
 
   if (isHero) {
-    console.log(`\nThat is now the front-page photograph. It belongs to no gallery,`);
-    console.log(`is not counted in any category, and importing another replaces it.`);
+    console.log(`\nThat is now ${targetLabel}. It belongs to no gallery, is not`);
+    console.log(`counted in any category, and importing another replaces it.`);
+    if (!isHeroMobile) {
+      console.log(`Phones use it too, unless a separate one is set with --to hero-mobile.`);
+    }
   } else {
     console.log(`\nFilenames become the captions on the site:`);
     console.log(`  golden-hour-ridge.jpg  ->  "Golden hour ridge"`);

@@ -38,8 +38,18 @@ The big photo on the front page is set separately and belongs to no gallery:
 npm run import -- --from "D:\Photos\the-one-i-want" --to hero
 ```
 
-The folder must hold exactly that one photo. It is processed like any other —
-shrunk to 2000px, metadata stripped — and importing another replaces it.
+Phones can have their own:
+
+```bash
+npm run import -- --from "D:\Photos\the-tall-one" --to hero-mobile
+```
+
+Worth setting, because a wide photograph on a tall phone screen gets cropped to
+a narrow slice of itself and usually loses its subject. A portrait frame chosen
+for the phone keeps it. With none set, phones use the desktop one.
+
+Each folder must hold exactly that one photo. They are processed like any other
+— shrunk to 2000px, metadata stripped — and importing another replaces it.
 
 It does not appear in any gallery, is not counted in any category total, and is
 never used as a category cover. Until one is set, the site falls back to the
@@ -122,7 +132,8 @@ src/
   components/        Nav, footer, photo grid, lightbox, category card
   pages/             index.astro and the catch-all category route
   photos/            Source images, by category
-  hero/              The single front-page photograph, in no gallery
+  hero/              The front-page photograph, in no gallery
+  hero/mobile/       Its portrait counterpart for phones
 ```
 
 ## Notes on the front end
