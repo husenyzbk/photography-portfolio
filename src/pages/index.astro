@@ -2,6 +2,7 @@
 import { Image, getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import CategoryCard from '../components/CategoryCard.astro';
+import Contact from '../components/Contact.astro';
 import { CATEGORIES, SITE } from '../consts';
 import { allPhotos, coverFor } from '../lib/photos';
 
@@ -22,7 +23,7 @@ const og = hero
   : undefined;
 ---
 
-<Base ogImage={og?.src}>
+<Base ogImage={og?.src} navOverImage={Boolean(hero)}>
   {
     hero && (
       <section class="hero">
@@ -71,7 +72,7 @@ const og = hero
   <section class="shell bio">
     <p class="eyebrow" data-reveal>About</p>
     <p class="bio__lead" data-reveal style="--reveal-delay:120ms">
-      I am a mechanical engineer in Beirut who takes photographs — mostly of
+      I am an engineer in Beirut who takes photographs — mostly of
       animals, people, and whatever the outdoors puts in front of me.
     </p>
     <p class="bio__body" data-reveal style="--reveal-delay:220ms">
@@ -96,6 +97,8 @@ const og = hero
       }
     </div>
   </section>
+
+  <Contact />
 </Base>
 
 <style>
@@ -106,8 +109,6 @@ const og = hero
        address bar, which makes the hero jump as you scroll. */
     height: 100svh;
     min-height: 32rem;
-    /* Pulls the hero up under the transparent sticky nav. */
-    margin-top: calc(-4.25rem - env(safe-area-inset-top, 0px));
     overflow: hidden;
   }
 
@@ -135,9 +136,11 @@ const og = hero
     to { transform: scale(1); opacity: 1; }
   }
 
-  /* The hero does not stop, it dissolves. The lower gradient reaches the page
-     background colour exactly at the bottom edge, so there is no visible seam
-     where the photo ends and the page begins. */
+  /* Two stacked jobs, and they must not be the same gradient.
+     The lower one darkens the image so white text stays readable over it. The
+     upper one melts the very bottom edge into the beige page so the hero has
+     no seam. Keeping the beige confined to the last sliver means the title
+     never ends up as white text sitting on a pale background. */
   .hero__scrim {
     position: absolute;
     inset: 0;
@@ -145,18 +148,26 @@ const og = hero
       linear-gradient(
         to top,
         var(--bg) 0%,
-        color-mix(in srgb, var(--bg) 82%, transparent) 14%,
-        color-mix(in srgb, var(--bg) 35%, transparent) 38%,
-        transparent 62%
+        color-mix(in srgb, var(--bg) 60%, transparent) 7%,
+        transparent 16%
       ),
-      linear-gradient(to bottom, color-mix(in srgb, var(--bg) 55%, transparent) 0%, transparent 28%);
+      linear-gradient(
+        to top,
+        rgba(10, 9, 8, 0.62) 6%,
+        rgba(10, 9, 8, 0.34) 32%,
+        rgba(10, 9, 8, 0.08) 58%,
+        transparent 78%
+      ),
+      linear-gradient(to bottom, rgba(10, 9, 8, 0.4) 0%, transparent 26%);
   }
 
   .hero__content {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: clamp(3rem, 10vh, 6rem);
+    /* Held clear of the beige melt at the very bottom edge. */
+    bottom: clamp(5rem, 16vh, 9rem);
+    color: var(--on-image);
     /* The title lifts away and fades as you scroll into the page. */
     opacity: calc(1 - var(--p, 0) * 1.6);
     transform: translate3d(0, calc(var(--p, 0) * -6vh), 0);
@@ -175,7 +186,7 @@ const og = hero
     font-size: 0.75rem;
     letter-spacing: 0.32em;
     text-transform: uppercase;
-    color: var(--fg-muted);
+    color: var(--on-image-muted);
     animation: rise 1s var(--ease) 0.4s both;
   }
 
@@ -199,6 +210,8 @@ const og = hero
     display: block;
     width: 1px;
     height: 100%;
+    /* The cue sits at the very bottom, which by then has melted to beige — so
+       it takes the page colour, not the on-image colour. */
     background: var(--fg);
     transform-origin: top;
     animation: cue 2.4s var(--ease) infinite;

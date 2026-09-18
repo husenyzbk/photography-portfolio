@@ -2,11 +2,18 @@
 import { CATEGORIES, SITE } from '../consts';
 import { href } from '../lib/url';
 
+interface Props {
+  /** True on the homepage, where the nav sits on top of the hero photograph. */
+  overImage?: boolean;
+}
+
+const { overImage = false } = Astro.props;
+
 const current = Astro.url.pathname;
 const isActive = (slug: string) => current.includes(`/${slug}`);
 ---
 
-<header class="nav">
+<header class:list={['nav', { 'nav--over-image': overImage }]}>
   <div class="shell nav__inner">
     <a class="nav__brand" href={href()} data-press="subtle" aria-label="Home">
       <span class="nav__name">{SITE.title}</span>
@@ -35,33 +42,25 @@ const isActive = (slug: string) => current.includes(`/${slug}`);
 </header>
 
 <style>
+  /* Not sticky, and not a bar.
+     A sticky header has to appear from somewhere as you scroll, and any
+     appearance is a pop. Letting it scroll away with the page removes the
+     problem rather than tuning it — and over the hero the links read as part
+     of the photograph instead of as furniture sitting above it. */
   .nav {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    /* The bar sits under the phone's status area on notched devices unless the
-       inset is added to its own padding. */
+    position: relative;
+    z-index: 20;
     padding-top: env(safe-area-inset-top, 0px);
-
-    /* No border and no backdrop blur. A blur has a hard boundary wherever its
-       element ends, which is exactly the stacked-band edge we are getting rid
-       of. A gradient that fades to nothing has no edge to see. */
-    /* The wash stays at full strength through the band the text occupies, then
-       fades out below it. Fading across the whole height instead would let
-       page content scroll up behind the words and collide with them. */
-    padding-bottom: 0.85rem;
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--bg) var(--nav-strength, 40%), transparent) 0%,
-      color-mix(in srgb, var(--bg) var(--nav-strength, 40%), transparent) 64%,
-      transparent 100%
-    );
-    transition: background 0.4s var(--ease);
+    background: none;
   }
 
-  /* Once scrolled, the wash becomes opaque so the links stay readable over
-     whatever passes beneath — still with no line anywhere. */
-  :global(body.is-scrolled) .nav { --nav-strength: 100%; }
+  /* On the homepage the nav is lifted onto the hero itself. */
+  .nav--over-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
 
   .nav__inner {
     display: flex;
@@ -125,30 +124,23 @@ const isActive = (slug: string) => current.includes(`/${slug}`);
   .nav__link:hover::after,
   .nav__link.is-active::after { transform: scaleX(1); }
 
+  /* Over a photograph the text has to be light, and needs a whisper of shadow
+     so it stays readable if the image behind it happens to be pale. */
+  .nav--over-image .nav__name,
+  .nav--over-image .nav__link:hover,
+  .nav--over-image .nav__link.is-active {
+    color: var(--on-image);
+  }
+
+  .nav--over-image .nav__link { color: var(--on-image-muted); }
+  .nav--over-image .nav__tagline { color: rgba(255, 255, 255, 0.55); }
+
+  .nav--over-image .nav__inner {
+    text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+  }
+
   @media (max-width: 34rem) {
     .nav__tagline { display: none; }
     .nav__inner { min-height: 3.5rem; }
   }
 </style>
-
-<script>
-  // Toggles the nav's bottom rule. rAF-throttled so scrolling never queues
-  // more than one class check per frame.
-  const syncScrolled = () => {
-    let ticking = false;
-    const update = () => {
-      document.body.classList.toggle('is-scrolled', window.scrollY > 8);
-      ticking = false;
-    };
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-    window.removeEventListener('scroll', onScroll);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    update();
-  };
-  syncScrolled();
-  document.addEventListener('astro:page-load', syncScrolled);
-</script>

@@ -14,6 +14,23 @@ export const SITE = {
   description:
     'Photography by Hussein Yazbeck — animals, people and the outdoors.',
   instagram: 'https://instagram.com/husenyzbk',
+
+  /**
+   * The contact address, base64-encoded.
+   *
+   * Address-harvesting bots scrape pages for anything shaped like an email
+   * address. Splitting the address into two plain strings is not enough —
+   * they both end up in the served HTML, where "husenyzbkp" and "hotmail.com"
+   * sit a few characters apart and are trivially recombined. Encoded, no part
+   * of the address appears in the page at all; it is decoded in the browser
+   * only when someone actually submits the form.
+   *
+   * This raises the cost of harvesting. It does not make the address secret —
+   * anyone who submits the form sees it, as they must.
+   *
+   * To change it:  node -e "console.log(Buffer.from('you@example.com').toString('base64'))"
+   */
+  contactEncoded: 'aHVzZW55emJrcEBob3RtYWlsLmNvbQ==',
 } as const;
 
 export type Category = {

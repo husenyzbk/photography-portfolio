@@ -5,7 +5,14 @@ const year = new Date().getFullYear();
 
 <footer class="footer">
   <div class="shell footer__inner">
-    <p class="footer__copy">© {year} {SITE.title}</p>
+    <p class="footer__rights">
+      © {year} {SITE.title}. All rights reserved.
+    </p>
+    <p class="footer__legal">
+      All photographs on this site are the property of {SITE.title} and are
+      protected by copyright. They may not be copied, reproduced, altered or
+      used in any form — commercial or otherwise — without written permission.
+    </p>
   </div>
 </footer>
 
@@ -19,27 +26,36 @@ const year = new Date().getFullYear();
     background: linear-gradient(
       to bottom,
       transparent 0%,
-      color-mix(in srgb, var(--bg-raised) 55%, transparent) 60%,
-      color-mix(in srgb, var(--bg-raised) 80%, transparent) 100%
+      color-mix(in srgb, var(--bg-raised) 50%, transparent) 55%,
+      color-mix(in srgb, var(--bg-raised) 85%, transparent) 100%
     );
   }
 
   .footer__inner {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 0.75rem;
     padding-top: clamp(3rem, 8vh, 5rem);
-    padding-bottom: 2rem;
-    /* Keeps the last line clear of the iPhone home indicator, and clear of the
-       floating Instagram button in the corner. */
-    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    /* Keeps the last line clear of the iPhone home indicator, and of the
+       floating Instagram button sitting in the corner. */
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    /* Room so the longer legal line never runs under the Instagram button. */
+    padding-right: clamp(4.5rem, 8vw, 6rem);
   }
 
-  .footer__copy {
+  .footer__rights {
     margin: 0;
-    font-size: 0.6875rem;
-    letter-spacing: 0.18em;
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .footer__legal {
+    margin: 0;
+    max-width: 44rem;
+    font-size: 0.75rem;
+    line-height: 1.65;
     color: var(--fg-faint);
   }
 </style>

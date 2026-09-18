@@ -1,0 +1,215 @@
+---
+import { SITE } from '../consts';
+---
+
+<section class="contact shell" id="contact">
+  <p class="eyebrow" data-reveal>Contact</p>
+  <h2 class="contact__title" data-reveal style="--reveal-delay:100ms">Get in touch</h2>
+  <p class="contact__intro" data-reveal style="--reveal-delay:160ms">
+    For prints, commissions, or anything else — write below and it will open in
+    your mail app, ready to send.
+  </p>
+
+  <form class="form" data-contact-form data-reveal style="--reveal-delay:220ms" novalidate>
+    <div class="field">
+      <label class="field__label" for="contact-name">Your name</label>
+      <input
+        class="field__input"
+        id="contact-name"
+        name="name"
+        type="text"
+        autocomplete="name"
+        required
+        maxlength="120"
+      />
+      <p class="field__error" data-error-for="name" hidden>Please add your name.</p>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="contact-message">Message</label>
+      <textarea
+        class="field__input field__input--area"
+        id="contact-message"
+        name="message"
+        rows="6"
+        required
+        maxlength="4000"></textarea>
+      <p class="field__error" data-error-for="message" hidden>Please write a message.</p>
+    </div>
+
+    <div class="form__actions">
+      <button class="btn" type="submit" data-press>
+        <span>Send</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+          <path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.7" fill="none" />
+        </svg>
+      </button>
+
+      <p class="form__note" data-form-note role="status" aria-live="polite"></p>
+    </div>
+  </form>
+</section>
+
+<style>
+  .contact { padding-top: clamp(4rem, 14vh, 8rem); }
+
+  .contact__title {
+    margin-top: 1rem;
+    font-size: clamp(1.75rem, 5vw, 3rem);
+    letter-spacing: -0.025em;
+  }
+
+  .contact__intro {
+    margin: 0.75rem 0 0;
+    max-width: var(--measure);
+    color: var(--fg-muted);
+  }
+
+  .form {
+    margin-top: 2.25rem;
+    max-width: 40rem;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .field { display: grid; gap: 0.5rem; }
+
+  .field__label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .field__input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--rule);
+    background: color-mix(in srgb, #fff 42%, transparent);
+    color: var(--fg);
+    font: inherit;
+    font-size: 1rem;
+    transition:
+      border-color var(--dur-fast) var(--ease),
+      background var(--dur-fast) var(--ease);
+  }
+
+  .field__input--area { resize: vertical; min-height: 9rem; }
+
+  .field__input:focus {
+    outline: none;
+    border-color: var(--fg);
+    background: color-mix(in srgb, #fff 72%, transparent);
+  }
+
+  .field__input.is-invalid { border-color: #a8443a; }
+
+  .field__error {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #a8443a;
+  }
+
+  .form__actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1.6rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--fg);
+    color: var(--bg);
+    font: inherit;
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .btn svg {
+    display: block;
+    transition: transform var(--dur-fast) var(--ease);
+  }
+  .btn:hover svg { transform: translateX(3px); }
+
+  .form__note {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+  }
+
+  .form__note a { text-decoration: underline; text-underline-offset: 3px; }
+</style>
+
+<script define:vars={{ encoded: SITE.contactEncoded }}>
+  const setupContactForm = () => {
+    const form = document.querySelector('[data-contact-form]');
+    if (!form) return;
+
+    const note = form.querySelector('[data-form-note]');
+
+    const showError = (field, show) => {
+      const input = form.querySelector(`[name="${field}"]`);
+      const error = form.querySelector(`[data-error-for="${field}"]`);
+      if (input) input.classList.toggle('is-invalid', show);
+      if (error) error.hidden = !show;
+    };
+
+    // Clear an error as soon as the person starts fixing it, rather than
+    // making them submit again to find out.
+    for (const field of ['name', 'message']) {
+      const input = form.querySelector(`[name="${field}"]`);
+      input?.addEventListener('input', () => {
+        if (input.value.trim()) showError(field, false);
+      });
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const data = new FormData(form);
+      const senderName = String(data.get('name') || '').trim();
+      const message = String(data.get('message') || '').trim();
+
+      showError('name', !senderName);
+      showError('message', !message);
+      if (!senderName || !message) {
+        if (note) note.textContent = '';
+        return;
+      }
+
+      // Decoded here, in the browser. The address never appears in the HTML.
+      const address = atob(encoded);
+      const subject = `Website enquiry from ${senderName}`;
+      const body = `${message}\n\n— ${senderName}`;
+
+      const href =
+        `mailto:${address}` +
+        `?subject=${encodeURIComponent(subject)}` +
+        `&body=${encodeURIComponent(body)}`;
+
+      window.location.href = href;
+
+      if (note) {
+        // If no mail app is configured nothing visible happens, which looks
+        // like the button is broken — so always say what should have happened
+        // and offer the address as a fallback.
+        note.innerHTML =
+          `Opening your mail app… if nothing happened, email ` +
+          `<a href="mailto:${address}">${address}</a> directly.`;
+      }
+    });
+  };
+
+  setupContactForm();
+  document.addEventListener('astro:page-load', setupContactForm);
+</script>

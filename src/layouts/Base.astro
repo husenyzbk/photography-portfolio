@@ -11,9 +11,11 @@ interface Props {
   description?: string;
   /** Absolute or site-relative image used for link previews. */
   ogImage?: string;
+  /** Lifts the nav onto the hero photograph — homepage only. */
+  navOverImage?: boolean;
 }
 
-const { title, description, ogImage } = Astro.props;
+const { title, description, ogImage, navOverImage = false } = Astro.props;
 
 const pageTitle = title ? `${title} — ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
 const pageDesc = description ?? SITE.description;
@@ -46,7 +48,7 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
 
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <Nav />
+    <Nav overImage={navOverImage} />
     <main id="main">
       <slot />
     </main>

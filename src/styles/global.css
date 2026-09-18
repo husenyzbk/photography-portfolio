@@ -1,16 +1,23 @@
 /* ---------------------------------------------------------------------------
    Design tokens
-   A gallery reads best on near-black: pure #000 crushes the edges of dark
-   photographs, so the ground is lifted slightly off it.
 --------------------------------------------------------------------------- */
 :root {
-  --bg: #0b0b0c;
-  --bg-raised: #141416;
-  --fg: #f2f2f0;
-  --fg-muted: #9a9a97;
-  --fg-faint: #5c5c5a;
-  --rule: #26262a;
-  --accent: #f2f2f0;
+  /* Warm beige ground. Not pure white — a paper tone sits behind photographs
+     far better, and stops bright images from glaring against the page. */
+  --bg: #ece5d9;
+  --bg-raised: #ddd4c4;
+  --fg: #1c1a17;
+  --fg-muted: #6b655b;
+  --fg-faint: #9c9488;
+  --rule: #d5cbba;
+  --accent: #1c1a17;
+
+  /* The hero photo and the fullscreen viewer stay dark regardless of the page
+     palette — text over an image needs to be light, and a photo shown full
+     screen needs darkness around it. */
+  --on-image: #ffffff;
+  --on-image-muted: rgba(255, 255, 255, 0.78);
+  --viewer-bg: #0b0b0c;
 
   --measure: 34rem;
   --gutter: clamp(1.25rem, 4vw, 3.5rem);
@@ -33,7 +40,7 @@
   --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text",
     "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 /* --------------------------------------------------------------------------
