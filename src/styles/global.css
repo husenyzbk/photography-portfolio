@@ -164,35 +164,7 @@ h1, h2, h3 {
   flex-direction: column;
   justify-content: center;
   background: var(--bg);
-
-  /* Depth under the leading edge, so the panel reads as passing over the one
-     behind rather than butting against it. */
-  box-shadow: 0 -18px 40px -14px rgba(48, 36, 20, 0.3);
 }
-
-/* The fade itself.
-
-   A band of the panel's own colour sitting *above* its top edge, dissolving
-   upward into whatever is behind. That turns the hard boundary into a
-   gradient — most visible where beige passes over a photograph, which is
-   where the line was sharpest.
-
-   It has to live outside the panel rather than being a fade on the panel's own
-   top: fading the panel itself would make it translucent there, and the pinned
-   panel behind would show through under the text. */
-.panel::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  height: clamp(70px, 9vh, 130px);
-  background: linear-gradient(to top, var(--bg) 0%, color-mix(in srgb, var(--bg) 55%, transparent) 42%, transparent 100%);
-  pointer-events: none;
-}
-
-/* Nothing sits above the first panel for it to fade into. */
-.panel:first-child::before { display: none; }
 
 /* Short screens cannot hold a section comfortably in one viewport, so the
    panels become ordinary stacked sections. */
