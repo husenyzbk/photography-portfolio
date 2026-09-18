@@ -16,13 +16,15 @@
  */
 import sharp from 'sharp';
 import exifReader from 'exif-reader';
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname, extname, basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PHOTOS = join(ROOT, 'src', 'photos');
+/** The hero photograph sits outside the galleries, so none of them contain it. */
+const HERO = join(ROOT, 'src', 'hero');
 
 /** Longest edge of the copies that get published. */
 const MAX_EDGE = 2000;
@@ -75,16 +77,18 @@ Import photos into the site.
 
 Options
   --from <folder>   Folder holding the photos to import (read only — never changed)
-  --to <gallery>    Which gallery they belong to
+  --to <gallery>    Which gallery they belong to, or "hero" for the front-page photo
   --watermark       Stamp a small signature in the corner
   --dry             Show what would happen without writing anything
 
 Galleries
 ${galleries.map((g) => `  ${g}`).join('\n')}
+  hero                (not a gallery — the single front-page photograph)
 
 Examples
   npm run import -- --from "D:\\Photos\\safari" --to animals
   npm run import -- --from "D:\\Photos\\wedding" --to people/events --watermark
+  npm run import -- --from "D:\\Photos\\chosen" --to hero
 `);
 }
 
@@ -198,8 +202,13 @@ async function main() {
     process.exit(1);
   }
 
-  const target = join(PHOTOS, ...args.to.split(/[/\\]/));
-  if (!galleries.includes(args.to.replace(/\\/g, '/'))) {
+  // "hero" is not a gallery. It is a single photograph belonging to no
+  // category, so it lives outside src/photos where the galleries cannot see
+  // it, and importing one replaces the previous rather than adding to it.
+  const isHero = args.to.toLowerCase() === 'hero';
+  const target = isHero ? HERO : join(PHOTOS, ...args.to.split(/[/\\]/));
+
+  if (!isHero && !galleries.includes(args.to.replace(/\\/g, '/'))) {
     console.log(`\nNote: "${args.to}" is not one of the existing galleries.`);
     console.log(`It will be created. Existing ones are:\n${galleries.map((g) => `  ${g}`).join('\n')}\n`);
   }
@@ -221,7 +230,28 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`\n${usable.length} photo(s) → ${args.to}`);
+  // There is exactly one hero. Rather than silently picking one of several,
+  // say so and stop — the wrong photograph on the front page is worse than an
+  // error message.
+  if (isHero && usable.length > 1) {
+    console.error(`\nThe hero is a single photograph, but that folder holds ${usable.length}:`);
+    usable.slice(0, 8).forEach((f) => console.error(`  ${f}`));
+    if (usable.length > 8) console.error(`  …and ${usable.length - 8} more`);
+    console.error('\nPoint --from at a folder holding just the one you want.\n');
+    process.exit(1);
+  }
+
+  // Replacing the hero, not adding to it.
+  if (isHero && !args.dry && existsSync(target)) {
+    for (const old of await readdir(target)) {
+      if (/\.(jpe?g|png|webp|avif)$/i.test(old)) {
+        await rm(join(target, old));
+        console.log(`  replacing previous hero: ${old}`);
+      }
+    }
+  }
+
+  console.log(`\n${usable.length} photo(s) → ${isHero ? 'the hero' : args.to}`);
   console.log(`Shrinking to ${MAX_EDGE}px, removing all metadata including GPS${args.watermark ? ', adding watermark' : ''}.`);
   if (args.dry) console.log('DRY RUN — nothing will be written.');
   console.log('');
@@ -298,20 +328,27 @@ async function main() {
     console.log(`  ${String(done).padStart(3)}. ${file}  ${mbIn}MB → ${outName}  ${mbOut}MB`);
   }
 
-  if (!args.dry && Object.keys(sidecar).length) {
+  if (!isHero && !args.dry && Object.keys(sidecar).length) {
     await writeFile(metaPath, `${JSON.stringify(sidecar, null, 2)}\n`, 'utf8');
   }
 
   const pct = totalIn ? Math.round((1 - totalOut / totalIn) * 100) : 0;
   console.log(`\n${done} photo(s) ${args.dry ? 'would be imported' : 'imported'}.`);
-  console.log(`  Camera settings kept for ${withDetails} photo(s) — shown under each photo full screen.`);
+  if (!isHero) {
+    console.log(`  Camera settings kept for ${withDetails} photo(s) — shown under each photo full screen.`);
+  }
   console.log(`  ${(totalIn / 1024 / 1024).toFixed(0)}MB of originals → ${(totalOut / 1024 / 1024).toFixed(0)}MB published (${pct}% smaller)`);
   console.log(`  Metadata stripped from ${hadGps} file(s) that carried it — no GPS location is published.`);
   console.log(`  Your original files were not touched.`);
 
-  console.log(`\nFilenames become the captions on the site:`);
-  console.log(`  01-heron-at-dawn.jpg  ->  "01 heron at dawn"`);
-  console.log(`Rename files in src/photos/${args.to}/ if you want nicer captions.`);
+  if (isHero) {
+    console.log(`\nThat is now the front-page photograph. It belongs to no gallery,`);
+    console.log(`is not counted in any category, and importing another replaces it.`);
+  } else {
+    console.log(`\nFilenames become the captions on the site:`);
+    console.log(`  golden-hour-ridge.jpg  ->  "Golden hour ridge"`);
+    console.log(`Rename files in src/photos/${args.to}/ if you want nicer captions.`);
+  }
   console.log(`\nNext:  npm run build\n`);
 }
 

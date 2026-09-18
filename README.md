@@ -30,6 +30,22 @@ Run `npm run import` with no arguments to see the list of galleries.
 RAW and HEIC files cannot be read directly — export them as JPEG from your
 photo software first. The tool tells you if it finds any.
 
+### The hero photograph
+
+The big photo on the front page is set separately and belongs to no gallery:
+
+```bash
+npm run import -- --from "D:\Photos\the-one-i-want" --to hero
+```
+
+The folder must hold exactly that one photo. It is processed like any other —
+shrunk to 2000px, metadata stripped — and importing another replaces it.
+
+It does not appear in any gallery, is not counted in any category total, and is
+never used as a category cover. Until one is set, the site falls back to the
+first photo alphabetically, which is why the hero would otherwise change on its
+own whenever a new photo sorts ahead of it.
+
 ### Camera settings
 
 The import tool reads the camera, lens, focal length, aperture, shutter, ISO

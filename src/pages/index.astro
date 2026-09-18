@@ -4,10 +4,14 @@ import Base from '../layouts/Base.astro';
 import CategoryCard from '../components/CategoryCard.astro';
 import Contact from '../components/Contact.astro';
 import { CATEGORIES, SITE } from '../consts';
-import { allPhotos, coverFor } from '../lib/photos';
+import { allPhotos, coverFor, heroPhoto } from '../lib/photos';
 
 const photos = allPhotos();
-const hero = photos[0];
+
+// The dedicated hero photograph. Until one is set it falls back to the first
+// photo on the site, which is why the hero currently doubles as a category
+// cover and changes whenever an earlier-sorting photo is imported.
+const hero = heroPhoto() ?? photos[0];
 
 // The link-preview image: what renders when the Instagram bio link gets
 // shared or unfurled elsewhere. 1200x630 is the size every platform crops to.

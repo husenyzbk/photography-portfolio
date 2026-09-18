@@ -86,6 +86,34 @@ const ALL: Photo[] = Object.entries(files)
   // Stable, predictable order: alphabetical by file path.
   .sort((a, b) => a.id.localeCompare(b.id));
 
+/**
+ * The hero photograph, which belongs to no gallery.
+ *
+ * It lives in src/hero/ rather than src/photos/ precisely so the galleries
+ * cannot see it: it does not appear in any gallery, is not counted in any
+ * category's total, and is never a category's cover. There is only ever one
+ * file there — the import tool replaces it rather than adding to it.
+ */
+const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/hero/*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,avif}',
+  { eager: true },
+);
+
+export function heroPhoto(): Photo | undefined {
+  const entries = Object.entries(heroFiles).sort(([a], [b]) => a.localeCompare(b));
+  if (!entries.length) return undefined;
+
+  const [file, mod] = entries[0];
+  const src = mod.default;
+  return {
+    src,
+    path: [],
+    alt: altFromFilename(file),
+    id: 'hero',
+    ratio: src.width / src.height,
+  };
+}
+
 /** Photos in a gallery, or — for a parent like "people" — all of its children. */
 export function photosIn(path: string[]): Photo[] {
   return ALL.filter((p) => path.every((seg, i) => p.path[i] === seg));
