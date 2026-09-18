@@ -17,6 +17,12 @@ interface Props {
 
 const { title, description, ogImage, navOverImage = false } = Astro.props;
 
+// Only pages that put something in the reveal slot — the homepage, with its
+// contact form — get the full-screen reveal. On a gallery page the block holds
+// nothing but the copyright, and giving that its own screen leaves a page of
+// empty beige with one line floating in it.
+const hasReveal = Astro.slots.has('reveal');
+
 const pageTitle = title ? `${title} — ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
 const pageDesc = description ?? SITE.description;
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
@@ -59,11 +65,70 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <Nav overImage={navOverImage} />
-    <main id="main">
+
+    {/*
+      The page proper. Opaque and above the reveal block, so it covers it until
+      it is scrolled off — that covering is what makes the reveal work.
+    */}
+    <main id="main" class="page-main">
       <slot />
     </main>
-    <Footer />
+
+    {/*
+      Pinned to the bottom of the viewport, behind the page. Scrolling slides
+      the page up off it rather than scrolling it into view — the same idea as
+      the hero, mirrored.
+    */}
+    <div class:list={['reveal', { 'reveal--full': hasReveal }]}>
+      <slot name="reveal" />
+      <Footer />
+    </div>
+
     <FloatingDock />
+
+    <style>
+      .page-main {
+        position: relative;
+        z-index: 1;
+        background: var(--bg);
+      }
+
+      /* `bottom: 0` keeps this block's bottom edge at the viewport bottom for
+         as long as its natural position would be below the fold — so it is
+         already sitting there, hidden behind the page, and is uncovered as the
+         page scrolls up off it.
+
+         It must be exactly one screen tall. Pinning the bottom of a block that
+         is taller than the viewport pushes its top off the top of the screen,
+         which hides the contact form and reveals only the footer. */
+      .reveal {
+        z-index: 0;
+      }
+
+      /* Only attempt the reveal when a screen is tall enough to hold the form
+         and the footer at once. On a short screen it falls back to an ordinary
+         section at the end of the page, which always works. */
+      @media (min-height: 40rem) {
+        .reveal--full {
+          position: sticky;
+          bottom: 0;
+          min-height: 100svh;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        /* The footer settles at the bottom of that screen, the form sits above
+           it in the remaining space. */
+        .reveal--full > :last-child { margin-top: auto; }
+
+        /* The section's own top padding is what pushed the block past one
+           screen, which left its heading stranded above the viewport during
+           the reveal. Centring in the flex column already provides the
+           breathing room, so the padding is not needed here. */
+        .reveal--full :global(.contact) { padding-top: 0; }
+      }
+    </style>
 
     <script>
       /**
