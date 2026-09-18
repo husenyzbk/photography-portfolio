@@ -121,9 +121,21 @@ const SIZES = '(max-width: 46rem) 100vw, (max-width: 80rem) 45vw, 30vw';
      portrait photos are the right call on a small screen, and it keeps every
      image comfortably large. */
   @media (max-width: 46rem) {
-    .row { flex-direction: column; }
-    .tile { flex-grow: 0 !important; }
+    .row {
+      flex-direction: column;
+      gap: var(--photo-gap-mobile, 0.375rem);
+    }
+
+    .tile {
+      flex-grow: 0;
+      /* flex-basis sizes the MAIN axis. In the desktop row that is the width,
+         and basis:0 is what lets flex-grow distribute it by aspect ratio. Here
+         the row has become a column, so the same basis:0 sets the HEIGHT — and
+         collapsed every photo to zero height, leaving the gallery blank on
+         phones. Back to auto, so each tile is as tall as its photo. */
+      flex-basis: auto;
+    }
+
     .grid { gap: var(--photo-gap-mobile, 0.375rem); }
-    .row { gap: var(--photo-gap-mobile, 0.375rem); }
   }
 </style>
