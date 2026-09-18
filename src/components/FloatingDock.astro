@@ -1,0 +1,169 @@
+---
+import { SITE } from '../consts';
+---
+
+{/*
+  Both floating controls live in one stack rather than being positioned
+  separately. Giving each its own `bottom` offset would mean recomputing them
+  every time a button is added, resized, or hidden — and they would overlap the
+  moment one changed size. A flex column cannot overlap itself.
+*/}
+<div class="dock">
+  <button
+    class="dock__btn dock__btn--top"
+    type="button"
+    data-back-to-top
+    data-press="subtle"
+    aria-label="Back to top"
+    hidden
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+      <path d="M12 19V6M6 12l6-6 6 6" stroke="currentColor" stroke-width="1.7" fill="none" />
+    </svg>
+  </button>
+
+  <a
+    class="dock__btn"
+    href={SITE.instagram}
+    target="_blank"
+    rel="me noopener"
+    aria-label="Instagram"
+    data-press="subtle"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+      <rect
+        x="2.75"
+        y="2.75"
+        width="18.5"
+        height="18.5"
+        rx="5.25"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      />
+      <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.6" />
+      <circle cx="17.4" cy="6.6" r="1.25" fill="currentColor" />
+    </svg>
+  </a>
+</div>
+
+<style>
+  .dock {
+    position: fixed;
+    z-index: 40;
+    right: clamp(1rem, 3vw, 2rem);
+    /* Clear of the iPhone home indicator. */
+    bottom: calc(clamp(1rem, 3vw, 2rem) + env(safe-area-inset-bottom, 0px));
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  .dock__btn {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    padding: 0;
+    border-radius: var(--radius-pill);
+
+    color: var(--fg);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(160%) blur(16px);
+    -webkit-backdrop-filter: saturate(160%) blur(16px);
+    border: 1px solid color-mix(in srgb, var(--fg) 14%, transparent);
+    box-shadow: 0 6px 24px rgba(40, 30, 15, 0.16);
+    cursor: pointer;
+
+    transition:
+      transform var(--dur-press) var(--ease-press),
+      filter var(--dur-press) var(--ease-press),
+      background var(--dur-fast) var(--ease),
+      color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease),
+      opacity 0.35s var(--ease);
+  }
+
+  .dock__btn svg { display: block; }
+
+  /* The Instagram link fades in once the page has settled, rather than popping
+     in mid-load. */
+  .dock__btn:not(.dock__btn--top) {
+    animation: dock-in 0.7s var(--ease) 0.9s both;
+  }
+
+  @keyframes dock-in {
+    from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.9); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Back-to-top is revealed by scrolling, so it animates on the class rather
+     than on load. `hidden` is removed first so the transition has something to
+     animate from. */
+  .dock__btn--top {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.92);
+    pointer-events: none;
+  }
+
+  .dock__btn--top.is-shown {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  @media (hover: hover) {
+    .dock__btn:hover {
+      background: color-mix(in srgb, var(--fg) 92%, transparent);
+      color: var(--bg);
+      border-color: transparent;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .dock__btn { width: 3rem; height: 3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dock__btn:not(.dock__btn--top) { animation: none; }
+    .dock__btn--top { transform: none; }
+  }
+</style>
+
+<script>
+  const setupBackToTop = () => {
+    const btn = document.querySelector('[data-back-to-top]');
+    if (!btn) return;
+
+    // Only worth offering once there is a meaningful amount of page behind you.
+    const threshold = () => Math.max(window.innerHeight * 1.2, 700);
+
+    let ticking = false;
+
+    const update = () => {
+      const show = window.scrollY > threshold();
+      if (show) btn.hidden = false;
+      btn.classList.toggle('is-shown', show);
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    update();
+
+    btn.addEventListener('click', () => {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    });
+  };
+
+  setupBackToTop();
+  document.addEventListener('astro:page-load', setupBackToTop);
+</script>

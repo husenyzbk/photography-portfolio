@@ -3,7 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { SITE } from '../consts';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import InstagramButton from '../components/InstagramButton.astro';
+import FloatingDock from '../components/FloatingDock.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -31,7 +31,17 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
     <title>{pageTitle}</title>
     <meta name="description" content={pageDesc} />
     <link rel="canonical" href={canonical} />
-    <meta name="theme-color" content="#0b0b0c" />
+    <meta name="theme-color" content="#ece5d9" />
+
+    {/* The name in the hero is the first thing anyone reads, so its font is
+        fetched in parallel with the stylesheet rather than after it. */}
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href={`${import.meta.env.BASE_URL.replace(/\/+$/, '')}/fonts/cormorant-garamond-300.woff2`}
+      crossorigin
+    />
 
     {/* Link previews — this is what renders when the Instagram bio link, or a
         DM of it, gets unfurled by another app. */}
@@ -53,7 +63,7 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
       <slot />
     </main>
     <Footer />
-    <InstagramButton />
+    <FloatingDock />
 
     <script>
       /**

@@ -20,15 +20,10 @@ const year = new Date().getFullYear();
   .footer {
     position: relative;
     margin-top: clamp(5rem, 14vh, 9rem);
-    /* No rule, no hard edge. The footer sits on a gradient that grows out of
-       the page background, so the eye reads a gradual settling rather than a
-       band stacked below the content. */
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      color-mix(in srgb, var(--bg-raised) 50%, transparent) 55%,
-      color-mix(in srgb, var(--bg-raised) 85%, transparent) 100%
-    );
+    /* Flat, not faded. The gradient that used to sit here was one of the
+       washes being removed — and it also has to be opaque, because the hero is
+       pinned behind the page and would otherwise show through. */
+    background: var(--bg);
   }
 
   .footer__inner {

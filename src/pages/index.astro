@@ -68,6 +68,13 @@ const og = hero
     )
   }
 
+  {/*
+    Everything below the hero rides in one opaque slab. The hero is pinned
+    behind it, so scrolling slides this over the photograph rather than
+    scrolling the photograph away. The slab must be opaque and above the hero,
+    or the pinned image shows through it.
+  */}
+  <div class="page-body">
   {/* Replace this text with your own — see src/pages/index.astro */}
   <section class="shell bio">
     <p class="eyebrow" data-reveal>About</p>
@@ -98,13 +105,19 @@ const og = hero
     </div>
   </section>
 
-  <Contact />
+    <Contact />
+  </div>
 </Base>
 
 <style>
   /* ---------------------------------------------------------------- hero */
+  /* Pinned to the top of the viewport for as long as the page scrolls past it,
+     so the content below slides over the photograph instead of pushing it up.
+     z-index 0 puts it behind .page-body. */
   .hero {
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 0;
     /* 100svh rather than vh: on mobile browsers vh includes the collapsing
        address bar, which makes the hero jump as you scroll. */
     height: 100svh;
@@ -112,16 +125,14 @@ const og = hero
     overflow: hidden;
   }
 
-  /* Parallax: the photo drifts down more slowly than the page scrolls, so the
-     hero and the content below feel like one continuous space instead of two
-     stacked panels. --p is 0 at the top and 1 once the hero has scrolled by;
-     it is set from JS in one rAF-throttled handler. */
-  .hero__media {
-    position: absolute;
-    inset: 0;
-    transform: translate3d(0, calc(var(--p, 0) * 12vh), 0);
-    will-change: transform;
+  /* The slab that slides over the hero. Opaque, and above it. */
+  .page-body {
+    position: relative;
+    z-index: 1;
+    background: var(--bg);
   }
+
+  .hero__media { position: absolute; inset: 0; }
 
   .hero__img {
     width: 100%;
@@ -136,47 +147,36 @@ const og = hero
     to { transform: scale(1); opacity: 1; }
   }
 
-  /* Two stacked jobs, and they must not be the same gradient.
-     The lower one darkens the image so white text stays readable over it. The
-     upper one melts the very bottom edge into the beige page so the hero has
-     no seam. Keeping the beige confined to the last sliver means the title
-     never ends up as white text sitting on a pale background. */
+  /* No beige melt any more — the page slides over the hero, so there is no
+     edge to disguise. What is left only darkens the image enough for the white
+     name and the nav links to stay readable over it. */
   .hero__scrim {
     position: absolute;
     inset: 0;
     background:
       linear-gradient(
         to top,
-        var(--bg) 0%,
-        color-mix(in srgb, var(--bg) 60%, transparent) 7%,
-        transparent 16%
+        rgba(10, 9, 8, 0.58) 0%,
+        rgba(10, 9, 8, 0.3) 34%,
+        rgba(10, 9, 8, 0.06) 62%,
+        transparent 82%
       ),
-      linear-gradient(
-        to top,
-        rgba(10, 9, 8, 0.62) 6%,
-        rgba(10, 9, 8, 0.34) 32%,
-        rgba(10, 9, 8, 0.08) 58%,
-        transparent 78%
-      ),
-      linear-gradient(to bottom, rgba(10, 9, 8, 0.4) 0%, transparent 26%);
+      linear-gradient(to bottom, rgba(10, 9, 8, 0.42) 0%, transparent 28%);
   }
 
   .hero__content {
     position: absolute;
     left: 0;
     right: 0;
-    /* Held clear of the beige melt at the very bottom edge. */
     bottom: clamp(5rem, 16vh, 9rem);
     color: var(--on-image);
-    /* The title lifts away and fades as you scroll into the page. */
-    opacity: calc(1 - var(--p, 0) * 1.6);
-    transform: translate3d(0, calc(var(--p, 0) * -6vh), 0);
-    will-change: transform, opacity;
   }
 
   .hero__title {
+    font-family: var(--font-display);
+    font-weight: 300;
     font-size: clamp(2.5rem, 9vw, 6.5rem);
-    letter-spacing: -0.035em;
+    letter-spacing: -0.005em;
     line-height: 0.95;
     animation: rise 1s var(--ease) 0.25s both;
   }
@@ -202,17 +202,14 @@ const og = hero
     width: 1px;
     height: 3rem;
     overflow: hidden;
-    /* Disappears as soon as you start scrolling — it has done its job. */
-    opacity: calc(0.55 - var(--p, 0) * 2);
+    opacity: 0.55;
   }
 
   .hero__cue-line {
     display: block;
     width: 1px;
     height: 100%;
-    /* The cue sits at the very bottom, which by then has melted to beige — so
-       it takes the page colour, not the on-image colour. */
-    background: var(--fg);
+    background: var(--on-image);
     transform-origin: top;
     animation: cue 2.4s var(--ease) infinite;
   }
@@ -230,6 +227,8 @@ const og = hero
      at the same left edge as everything else rather than floating in the
      middle of the page. */
   .bio__lead {
+    font-family: var(--font-display);
+    font-weight: 400;
     margin: 1.25rem 0 0;
     max-width: var(--measure);
     font-size: clamp(1.25rem, 2.6vw, 1.75rem);
@@ -267,49 +266,10 @@ const og = hero
   }
 
   /* The parallax is decoration. Switch it off and the hero simply sits still. */
+  /* The scroll cue is the only motion left in the hero — the pinning itself is
+     plain scrolling, which reduced-motion does not object to. */
   @media (prefers-reduced-motion: reduce) {
-    .hero__media,
-    .hero__content { transform: none; }
-    .hero__content { opacity: 1; }
+    .hero__cue { display: none; }
   }
 </style>
 
-<script>
-  /**
-   * Drives the hero parallax by writing a single 0→1 progress value onto the
-   * hero element. Everything else — the drift, the fading title, the scroll
-   * cue — is plain CSS reading that one variable.
-   *
-   * One rAF-throttled handler for the whole effect: reading scrollY on every
-   * scroll event and writing styles directly would force layout dozens of
-   * times a second and stutter on a phone.
-   */
-  const setupParallax = () => {
-    const hero = document.querySelector('.hero') as HTMLElement | null;
-    if (!hero) return;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    let ticking = false;
-
-    const update = () => {
-      const height = hero.offsetHeight || 1;
-      const progress = Math.min(1, Math.max(0, window.scrollY / height));
-      hero.style.setProperty('--p', progress.toFixed(4));
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    update();
-  };
-
-  setupParallax();
-  document.addEventListener('astro:page-load', setupParallax);
-</script>
