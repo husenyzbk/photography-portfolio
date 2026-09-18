@@ -1,0 +1,315 @@
+---
+import { Picture } from 'astro:assets';
+import type { Photo } from '../lib/photos';
+
+interface Props {
+  photos: Photo[];
+}
+
+const { photos } = Astro.props;
+
+// Full-screen viewing tops out at 2400px — beyond that the file grows fast
+// and nobody can see the difference on a screen.
+const WIDTHS = [800, 1200, 1600, 2400];
+---
+
+<dialog class="lb" aria-label="Photo viewer">
+  <button class="lb__close" type="button" data-lb-close aria-label="Close viewer">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+      <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="1.4" fill="none" />
+    </svg>
+  </button>
+
+  <button class="lb__nav lb__nav--prev" type="button" data-lb-prev aria-label="Previous photo">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="26" height="26">
+      <path d="M15 4L7 12l8 8" stroke="currentColor" stroke-width="1.4" fill="none" />
+    </svg>
+  </button>
+
+  <button class="lb__nav lb__nav--next" type="button" data-lb-next aria-label="Next photo">
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="26" height="26">
+      <path d="M9 4l8 8-8 8" stroke="currentColor" stroke-width="1.4" fill="none" />
+    </svg>
+  </button>
+
+  <div class="lb__stage" data-lb-stage>
+    {
+      photos.map((photo, i) => (
+        <figure class="lb__slide" data-lb-slide data-photo-id={photo.id} data-index={i}>
+          <Picture
+            src={photo.src}
+            alt={photo.alt}
+            widths={WIDTHS}
+            sizes="100vw"
+            formats={['avif', 'webp']}
+            fallbackFormat="jpg"
+            quality={72}
+            loading="lazy"
+            decoding="async"
+            class="lb__img"
+          />
+        </figure>
+      ))
+    }
+  </div>
+
+  <footer class="lb__bar">
+    <p class="lb__caption" data-lb-caption></p>
+    <p class="lb__counter" data-lb-counter></p>
+  </footer>
+</dialog>
+
+<style>
+  .lb {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: #08080a;
+    color: var(--fg);
+    overflow: hidden;
+  }
+
+  .lb::backdrop { background: rgba(4, 4, 6, 0.94); }
+
+  /* Open animation. Only opacity and transform move, so it composites on the
+     GPU and holds 60fps on a phone. */
+  .lb[open] { animation: lb-in 0.32s var(--ease); }
+  .lb[open]::backdrop { animation: lb-fade 0.32s var(--ease); }
+
+  @keyframes lb-in {
+    from { opacity: 0; transform: scale(0.985); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .lb__stage {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    /* An explicit minmax(0,1fr) track is what makes the row a *definite*
+       height. With an auto row, the slide's height:100% cannot resolve and
+       falls back to the image's intrinsic height, which overflows the screen. */
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    place-items: center;
+    padding: clamp(0.5rem, 3vw, 3rem);
+    padding-top: calc(clamp(0.5rem, 3vw, 3rem) + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    touch-action: pan-y;
+  }
+
+  .lb__slide {
+    grid-area: 1 / 1;
+    margin: 0;
+    display: none;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.99);
+    transition: opacity 0.34s var(--ease), transform 0.34s var(--ease);
+  }
+
+  /* Neighbours stay mounted so the browser prefetches them — paging then
+     feels instant instead of showing a blank frame. */
+  .lb__slide.is-near { display: grid; }
+  .lb__slide.is-active {
+    display: grid;
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  /* max-* with auto sizing lets the photo find its own size inside the box
+     without depending on a percentage height resolving. */
+  .lb__img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .lb__close,
+  .lb__nav {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg);
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+
+  .lb__close:hover,
+  .lb__nav:hover { background: rgba(255, 255, 255, 0.14); }
+  .lb__nav:active { transform: scale(0.94); }
+
+  .lb__close {
+    top: calc(0.75rem + env(safe-area-inset-top, 0px));
+    right: 0.75rem;
+  }
+
+  .lb__nav { top: 50%; margin-top: -1.5rem; }
+  .lb__nav--prev { left: 0.75rem; }
+  .lb__nav--next { right: 0.75rem; }
+
+  .lb__bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem clamp(1rem, 4vw, 2rem);
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, rgba(8, 8, 10, 0.9), transparent);
+    pointer-events: none;
+  }
+
+  .lb__caption,
+  .lb__counter {
+    margin: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .lb__counter { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* Phones swipe instead — arrows would sit on top of the photo. */
+  @media (max-width: 46rem) {
+    .lb__nav { display: none; }
+  }
+</style>
+
+<script>
+  const setupLightbox = () => {
+    const dialog = document.querySelector('.lb');
+    if (!dialog) return;
+
+    const slides = Array.from(dialog.querySelectorAll('[data-lb-slide]'));
+    if (!slides.length) return;
+
+    const caption = dialog.querySelector('[data-lb-caption]');
+    const counter = dialog.querySelector('[data-lb-counter]');
+    const stage = dialog.querySelector('[data-lb-stage]');
+    let index = 0;
+
+    const show = (next) => {
+      index = (next + slides.length) % slides.length;
+
+      slides.forEach((slide, i) => {
+        // Keep the immediate neighbours mounted so their images are already
+        // fetched by the time you page onto them.
+        const near =
+          Math.abs(i - index) <= 1 ||
+          (index === 0 && i === slides.length - 1) ||
+          (index === slides.length - 1 && i === 0);
+        slide.classList.toggle('is-near', near);
+        slide.classList.toggle('is-active', i === index);
+      });
+
+      const img = slides[index].querySelector('img');
+      if (caption) caption.textContent = img ? img.getAttribute('alt') : '';
+      if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+    };
+
+    const open = (photoId) => {
+      const found = slides.findIndex((s) => s.dataset.photoId === photoId);
+      show(found >= 0 ? found : 0);
+      if (!dialog.open) dialog.showModal();
+      // Stop the page behind from scrolling under the overlay.
+      document.body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = '';
+    };
+
+    document.querySelectorAll('[data-lightbox-open]').forEach((btn) => {
+      btn.addEventListener('click', () => open(btn.dataset.photoId || ''));
+    });
+
+    const closeBtn = dialog.querySelector('[data-lb-close]');
+    if (closeBtn) closeBtn.addEventListener('click', close);
+
+    const prevBtn = dialog.querySelector('[data-lb-prev]');
+    if (prevBtn) prevBtn.addEventListener('click', () => show(index - 1));
+
+    const nextBtn = dialog.querySelector('[data-lb-next]');
+    if (nextBtn) nextBtn.addEventListener('click', () => show(index + 1));
+
+    // Esc already closes a native dialog; this keeps body scroll in sync.
+    dialog.addEventListener('close', () => {
+      document.body.style.overflow = '';
+    });
+
+    // Clicking the space around the photo dismisses; clicking the photo does not.
+    if (stage) {
+      stage.addEventListener('click', (e) => {
+        if (e.target === stage) close();
+      });
+    }
+
+    dialog.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        show(index + 1);
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        show(index - 1);
+      }
+    });
+
+    // Swipe. Pointer events cover touch and pen without a second code path.
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    if (stage) {
+      stage.addEventListener(
+        'pointerdown',
+        (e) => {
+          if (e.pointerType === 'mouse') return;
+          tracking = true;
+          startX = e.clientX;
+          startY = e.clientY;
+        },
+        { passive: true },
+      );
+
+      stage.addEventListener(
+        'pointerup',
+        (e) => {
+          if (!tracking) return;
+          tracking = false;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          // Ignore mostly-vertical drags so scrolling never pages photos.
+          if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+          show(dx < 0 ? index + 1 : index - 1);
+        },
+        { passive: true },
+      );
+    }
+  };
+
+  setupLightbox();
+  document.addEventListener('astro:page-load', setupLightbox);
+</script>

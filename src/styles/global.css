@@ -1,0 +1,158 @@
+/* ---------------------------------------------------------------------------
+   Design tokens
+   A gallery reads best on near-black: pure #000 crushes the edges of dark
+   photographs, so the ground is lifted slightly off it.
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #0b0b0c;
+  --bg-raised: #141416;
+  --fg: #f2f2f0;
+  --fg-muted: #9a9a97;
+  --fg-faint: #5c5c5a;
+  --rule: #26262a;
+  --accent: #f2f2f0;
+
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --shell: 88rem;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 0.6s;
+  --dur-fast: 0.28s;
+
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text",
+    "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  color-scheme: dark;
+}
+
+/* --------------------------------------------------------------------------
+   Reset
+-------------------------------------------------------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+[hidden] { display: none !important; }
+
+a { color: inherit; text-decoration: none; }
+
+h1, h2, h3 {
+  margin: 0;
+  font-weight: 450;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* --------------------------------------------------------------------------
+   Layout primitives
+-------------------------------------------------------------------------- */
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* Small tracked-out label — the typographic device that makes a page read as
+   a gallery rather than a blog. */
+.eyebrow {
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.rule {
+  height: 1px;
+  background: var(--rule);
+  border: 0;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Scroll reveal
+   Only transform + opacity are animated, so these composite on the GPU and
+   hold 60fps on a phone. Anything animating width/height/top would not.
+-------------------------------------------------------------------------- */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Once revealed, drop the compositing hint so long galleries don't pin
+   hundreds of layers in memory. */
+[data-reveal].reveal-done { will-change: auto; }
+
+/* --------------------------------------------------------------------------
+   Accessibility
+-------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+.skip-link:focus { left: var(--gutter); top: 0.5rem; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Motion is decoration here, never information — so it all switches off
+   cleanly for anyone who has asked their OS to reduce it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}

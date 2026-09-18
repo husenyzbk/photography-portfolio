@@ -1,0 +1,143 @@
+---
+import { CATEGORIES, SITE } from '../consts';
+import { href } from '../lib/url';
+
+const current = Astro.url.pathname;
+const isActive = (slug: string) => current.includes(`/${slug}`);
+---
+
+<header class="nav">
+  <div class="shell nav__inner">
+    <a class="nav__brand" href={href()}>
+      <span class="nav__name">{SITE.title}</span>
+      <span class="nav__tagline">{SITE.tagline}</span>
+    </a>
+
+    <nav aria-label="Galleries">
+      <ul class="nav__list">
+        {
+          CATEGORIES.map((c) => (
+            <li>
+              <a
+                href={href(c.slug)}
+                class:list={['nav__link', { 'is-active': isActive(c.slug) }]}
+                aria-current={isActive(c.slug) ? 'page' : undefined}
+              >
+                {c.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    /* The bar sits under the phone's status area on notched devices unless the
+       inset is added to its own padding. */
+    padding-top: env(safe-area-inset-top, 0px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--dur-fast) var(--ease);
+  }
+
+  /* Rule only appears once the page has scrolled, so the nav is invisible
+     over the hero and defined everywhere else. */
+  :global(body.is-scrolled) .nav { border-bottom-color: var(--rule); }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 4.25rem;
+    flex-wrap: wrap;
+  }
+
+  .nav__brand { display: flex; align-items: baseline; gap: 0.6rem; }
+
+  .nav__name {
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+    font-weight: 500;
+  }
+
+  .nav__tagline {
+    font-size: 0.6875rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+
+  .nav__list {
+    display: flex;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav__link {
+    position: relative;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    padding-block: 0.35rem;
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  /* Underline grows from the left on hover — a transform, so it is free to
+     animate. */
+  .nav__link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-fast) var(--ease);
+  }
+
+  .nav__link:hover,
+  .nav__link.is-active { color: var(--fg); }
+  .nav__link:hover::after,
+  .nav__link.is-active::after { transform: scaleX(1); }
+
+  @media (max-width: 34rem) {
+    .nav__tagline { display: none; }
+    .nav__inner { min-height: 3.5rem; }
+  }
+</style>
+
+<script>
+  // Toggles the nav's bottom rule. rAF-throttled so scrolling never queues
+  // more than one class check per frame.
+  const syncScrolled = () => {
+    let ticking = false;
+    const update = () => {
+      document.body.classList.toggle('is-scrolled', window.scrollY > 8);
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+    window.removeEventListener('scroll', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    update();
+  };
+  syncScrolled();
+  document.addEventListener('astro:page-load', syncScrolled);
+</script>

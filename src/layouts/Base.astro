@@ -1,0 +1,99 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { SITE } from '../consts';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Absolute or site-relative image used for link previews. */
+  ogImage?: string;
+}
+
+const { title, description, ogImage } = Astro.props;
+
+const pageTitle = title ? `${title} — ${SITE.title}` : `${SITE.title} — ${SITE.tagline}`;
+const pageDesc = description ?? SITE.description;
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0b0b0c" />
+
+    {/* Link previews — this is what renders when the Instagram bio link, or a
+        DM of it, gets unfurled by another app. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonical} />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
+
+    <ClientRouter />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+
+    <script>
+      /**
+       * Scroll reveal.
+       *
+       * One shared IntersectionObserver for the whole page rather than a
+       * listener per element — a 60-photo gallery would otherwise thrash the
+       * main thread on every scroll frame.
+       */
+      const setupReveal = () => {
+        const targets = document.querySelectorAll('[data-reveal]:not(.is-visible)');
+        if (!targets.length) return;
+
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduced) {
+          targets.forEach((el) => el.classList.add('is-visible', 'reveal-done'));
+          return;
+        }
+
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const el = entry.target as HTMLElement;
+              el.classList.add('is-visible');
+              el.addEventListener(
+                'transitionend',
+                () => el.classList.add('reveal-done'),
+                { once: true },
+              );
+              io.unobserve(el);
+            }
+          },
+          // Start the reveal slightly before the element reaches the viewport
+          // so it is already settling by the time it is properly in view.
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.01 },
+        );
+
+        targets.forEach((el) => io.observe(el));
+      };
+
+      setupReveal();
+      // Re-run after client-side navigation.
+      document.addEventListener('astro:page-load', setupReveal);
+    </script>
+  </body>
+</html>

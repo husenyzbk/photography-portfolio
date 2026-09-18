@@ -1,0 +1,170 @@
+---
+import { getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PhotoGrid from '../components/PhotoGrid.astro';
+import Lightbox from '../components/Lightbox.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import { CATEGORIES, type Category } from '../consts';
+import { photosIn, coverFor } from '../lib/photos';
+import { href } from '../lib/url';
+
+/**
+ * One route per category, including nested ones — /people/ and
+ * /people/portraits/ are both generated from the tree in consts.ts. Adding a
+ * gallery there creates its page automatically.
+ */
+export function getStaticPaths() {
+  const routes: {
+    params: { path: string };
+    props: { category: Category; segments: string[]; parent?: Category };
+  }[] = [];
+
+  for (const category of CATEGORIES) {
+    routes.push({
+      params: { path: category.slug },
+      props: { category, segments: [category.slug] },
+    });
+
+    for (const child of category.children ?? []) {
+      routes.push({
+        params: { path: `${category.slug}/${child.slug}` },
+        props: {
+          category: child,
+          segments: [category.slug, child.slug],
+          parent: category,
+        },
+      });
+    }
+  }
+
+  return routes;
+}
+
+const { category, segments, parent } = Astro.props;
+
+const children = category.children ?? [];
+const photos = children.length ? [] : photosIn(segments);
+const cover = coverFor(segments);
+
+const og = cover
+  ? await getImage({
+      src: cover.src,
+      width: 1200,
+      height: 630,
+      fit: 'cover',
+      format: 'jpg',
+      quality: 76,
+    })
+  : undefined;
+---
+
+<Base
+  title={parent ? `${category.name} — ${parent.name}` : category.name}
+  description={category.blurb}
+  ogImage={og?.src}
+>
+  <header class="shell head">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a href={href()}>Index</a>
+      {
+        parent && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={href(parent.slug)}>{parent.name}</a>
+          </>
+        )
+      }
+    </nav>
+
+    <h1 class="head__title">{category.name}</h1>
+    <p class="head__blurb">{category.blurb}</p>
+  </header>
+
+  {
+    children.length > 0 && (
+      <section class="shell sub">
+        <div class="sub__grid">
+          {children.map((child, i) => (
+            <CategoryCard
+              category={child}
+              path={[category.slug, child.slug]}
+              cover={coverFor([category.slug, child.slug])}
+              index={i}
+            />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  {
+    children.length === 0 && photos.length > 0 && (
+      <section class="gallery">
+        <PhotoGrid photos={photos} />
+        <Lightbox photos={photos} />
+      </section>
+    )
+  }
+
+  {
+    children.length === 0 && photos.length === 0 && (
+      <section class="shell empty">
+        <p class="empty__body">
+          Nothing here yet. Add images to{' '}
+          <code>src/photos/{segments.join('/')}/</code> and they appear automatically.
+        </p>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .head {
+    padding-top: clamp(2.5rem, 9vh, 5rem);
+    padding-bottom: clamp(1.75rem, 5vh, 3rem);
+  }
+
+  .crumbs {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-bottom: 1.25rem;
+  }
+
+  .crumbs a { transition: color var(--dur-fast) var(--ease); }
+  .crumbs a:hover { color: var(--fg); }
+
+  .head__title {
+    font-size: clamp(2rem, 7vw, 4rem);
+    letter-spacing: -0.03em;
+  }
+
+  .head__blurb {
+    margin: 0.75rem 0 0;
+    color: var(--fg-muted);
+    max-width: var(--measure);
+    font-size: 1rem;
+  }
+
+  /* The gallery runs edge to edge — a photo grid reads better full-bleed than
+     boxed inside the text measure. */
+  .gallery { padding-inline: clamp(0.375rem, 1.2vw, 0.75rem); }
+
+  .sub__grid {
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
+  .empty { padding-block: clamp(3rem, 10vh, 6rem); }
+  .empty__body { color: var(--fg-muted); max-width: var(--measure); }
+  .empty__body code {
+    background: var(--bg-raised);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+</style>

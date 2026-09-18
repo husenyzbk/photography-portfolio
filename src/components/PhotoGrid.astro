@@ -1,0 +1,115 @@
+---
+import { Picture } from 'astro:assets';
+import type { Photo } from '../lib/photos';
+import { justify } from '../lib/layout';
+
+interface Props {
+  photos: Photo[];
+}
+
+const { photos } = Astro.props;
+const rows = justify(photos);
+
+// Derivative widths. A phone pulls the 400/800 variant; only a large desktop
+// display ever requests 2400. The original is never served.
+const WIDTHS = [400, 800, 1200, 1600, 2400];
+
+// Desktop: a photo occupies roughly a third of the shell. Mobile: full width.
+const SIZES = '(max-width: 46rem) 100vw, (max-width: 80rem) 45vw, 30vw';
+---
+
+<div class="grid">
+  {
+    rows.map((row, rowIndex) => (
+      <div class="row">
+        {row.photos.map((photo, i) => (
+          <figure
+            class="tile"
+            style={`flex-grow:${photo.ratio};--ar:${photo.ratio};--reveal-delay:${i * 70}ms`}
+            data-reveal
+          >
+            <button
+              class="tile__btn"
+              type="button"
+              data-lightbox-open
+              data-photo-id={photo.id}
+              aria-label={`View ${photo.alt} full screen`}
+            >
+              <Picture
+                src={photo.src}
+                alt={photo.alt}
+                widths={WIDTHS}
+                sizes={SIZES}
+                formats={['avif', 'webp']}
+                fallbackFormat="jpg"
+                quality={62}
+                loading={rowIndex === 0 ? 'eager' : 'lazy'}
+                fetchpriority={rowIndex === 0 && i === 0 ? 'high' : 'auto'}
+                decoding="async"
+                class="tile__img"
+              />
+            </button>
+          </figure>
+        ))}
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--photo-gap, 0.5rem);
+  }
+
+  .row {
+    display: flex;
+    gap: var(--photo-gap, 0.5rem);
+  }
+
+  .tile {
+    margin: 0;
+    /* flex-basis 0 means width is distributed purely by flex-grow, i.e. purely
+       by aspect ratio — that is what makes the row heights line up. */
+    flex-basis: 0;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-raised);
+  }
+
+  .tile__btn {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+    /* Reserving the exact box before the image decodes means zero layout
+       shift as the gallery fills in. */
+    aspect-ratio: var(--ar);
+  }
+
+  .tile__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.001); /* avoids hairline edges during the zoom */
+    transition: transform 0.9s var(--ease), opacity 0.6s var(--ease);
+  }
+
+  @media (hover: hover) {
+    .tile:hover .tile__img { transform: scale(1.04); }
+  }
+
+  /* On a phone the justified rows collapse to one photo per row: full-bleed
+     portrait photos are the right call on a small screen, and it keeps every
+     image comfortably large. */
+  @media (max-width: 46rem) {
+    .row { flex-direction: column; }
+    .tile { flex-grow: 0 !important; }
+    .grid { gap: var(--photo-gap-mobile, 0.375rem); }
+    .row { gap: var(--photo-gap-mobile, 0.375rem); }
+  }
+</style>

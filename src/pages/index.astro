@@ -1,0 +1,196 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import CategoryCard from '../components/CategoryCard.astro';
+import { CATEGORIES, SITE } from '../consts';
+import { allPhotos, coverFor } from '../lib/photos';
+
+const photos = allPhotos();
+const hero = photos[0];
+
+// The link-preview image: what renders when the Instagram bio link gets
+// shared or unfurled elsewhere. 1200x630 is the size every platform crops to.
+const og = hero
+  ? await getImage({
+      src: hero.src,
+      width: 1200,
+      height: 630,
+      fit: 'cover',
+      format: 'jpg',
+      quality: 76,
+    })
+  : undefined;
+---
+
+<Base ogImage={og?.src}>
+  {
+    hero && (
+      <section class="hero">
+        <div class="hero__media">
+          <Image
+            src={hero.src}
+            alt={hero.alt}
+            widths={[640, 1024, 1600, 2400]}
+            sizes="100vw"
+            format="avif"
+            quality={64}
+            loading="eager"
+            fetchpriority="high"
+            decoding="sync"
+            class="hero__img"
+          />
+        </div>
+
+        <div class="hero__scrim" />
+
+        <div class="shell hero__content">
+          <h1 class="hero__title">{SITE.title}</h1>
+          <p class="hero__tagline">{SITE.tagline}</p>
+        </div>
+
+        <div class="hero__cue" aria-hidden="true">
+          <span class="hero__cue-line" />
+        </div>
+      </section>
+    )
+  }
+
+  {
+    !hero && (
+      <section class="shell empty">
+        <h1 class="empty__title">No photos yet</h1>
+        <p class="empty__body">
+          Drop images into <code>src/photos/&lt;category&gt;/</code> and they appear here
+          automatically.
+        </p>
+      </section>
+    )
+  }
+
+  <section class="shell work">
+    <p class="eyebrow" data-reveal>Selected work</p>
+    <div class="work__grid">
+      {
+        CATEGORIES.map((category, i) => (
+          <CategoryCard
+            category={category}
+            path={[category.slug]}
+            cover={coverFor([category.slug])}
+            index={i}
+          />
+        ))
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------------------------------------------------------------- hero */
+  .hero {
+    position: relative;
+    /* 100svh rather than vh: on mobile browsers vh includes the collapsing
+       address bar, which makes the hero jump as you scroll. */
+    height: 100svh;
+    min-height: 32rem;
+    /* Pulls the hero up under the transparent sticky nav. */
+    margin-top: calc(-4.25rem - env(safe-area-inset-top, 0px));
+    overflow: hidden;
+  }
+
+  .hero__media { position: absolute; inset: 0; }
+
+  .hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: hero-settle 1.6s var(--ease) both;
+  }
+
+  /* A slow, barely-there push in. Scale only — no layout cost. */
+  @keyframes hero-settle {
+    from { transform: scale(1.06); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgba(11, 11, 12, 0.85) 0%, rgba(11, 11, 12, 0) 45%),
+      linear-gradient(to bottom, rgba(11, 11, 12, 0.5) 0%, rgba(11, 11, 12, 0) 30%);
+  }
+
+  .hero__content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(3rem, 10vh, 6rem);
+  }
+
+  .hero__title {
+    font-size: clamp(2.5rem, 9vw, 6.5rem);
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+    animation: rise 1s var(--ease) 0.25s both;
+  }
+
+  .hero__tagline {
+    margin: 0.75rem 0 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    animation: rise 1s var(--ease) 0.4s both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translate3d(0, 24px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+
+  .hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: 1.25rem;
+    width: 1px;
+    height: 3rem;
+    overflow: hidden;
+    opacity: 0.55;
+  }
+
+  .hero__cue-line {
+    display: block;
+    width: 1px;
+    height: 100%;
+    background: var(--fg);
+    transform-origin: top;
+    animation: cue 2.4s var(--ease) infinite;
+  }
+
+  @keyframes cue {
+    0% { transform: scaleY(0) translateY(0); }
+    40% { transform: scaleY(1) translateY(0); }
+    100% { transform: scaleY(1) translateY(100%); }
+  }
+
+  /* ---------------------------------------------------------------- work */
+  .work { padding-top: clamp(4rem, 12vh, 7rem); }
+
+  .work__grid {
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    margin-top: 1.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  }
+
+  /* --------------------------------------------------------------- empty */
+  .empty { padding-block: clamp(6rem, 22vh, 12rem); }
+  .empty__title { font-size: clamp(1.75rem, 5vw, 2.75rem); }
+  .empty__body { color: var(--fg-muted); max-width: var(--measure); }
+  .empty__body code {
+    background: var(--bg-raised);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+</style>
