@@ -5,35 +5,47 @@ to plain HTML and images and is served from a CDN.
 
 ## Adding photos
 
-Drop image files into the folder for the gallery:
-
-```
-src/photos/
-  animals/
-  people/events/
-  people/portraits/
-  outdoors/street-photography/
-  outdoors/miscellaneous/
-```
-
-That is the whole process. There is no list to update — every image in those
-folders is picked up automatically, and the filename becomes the caption
-(`golden-hour-ridge.jpg` → "Golden hour ridge"), so name files descriptively.
-
-Photos are ordered alphabetically by filename. Prefixing with numbers
-(`01-`, `02-`) gives you explicit control over the running order.
-
-Then:
+Point the import tool at a folder of photos and say which gallery they belong
+to:
 
 ```bash
+npm run import -- --from "D:\Photos\safari" --to animals
 npm run build
 ```
 
+For each photo it makes a web-ready copy: shrunk to fit 2000px, **all metadata
+removed including the GPS coordinates your camera writes into every file**, and
+filed into the right gallery. Your originals are read but never modified,
+moved or deleted.
+
+| Option | What it does |
+| --- | --- |
+| `--from <folder>` | Where your photos are |
+| `--to <gallery>` | `animals`, `people/events`, `people/portraits`, `outdoors/street-photography`, `outdoors/miscellaneous` |
+| `--dry` | Show what would happen without writing anything |
+| `--watermark` | Stamp a signature in the corner |
+
+Run `npm run import` with no arguments to see the list of galleries.
+
+RAW and HEIC files cannot be read directly — export them as JPEG from your
+photo software first. The tool tells you if it finds any.
+
+### Captions and ordering
+
+The filename becomes the caption (`golden-hour-ridge.jpg` → "Golden hour
+ridge"), so rename files in `src/photos/<gallery>/` if `IMG_4821` is not what
+you want under a photo. Photos are ordered alphabetically; prefixing with
+numbers (`01-`, `02-`) gives you explicit control over the running order.
+
 ### Originals
 
-Put full-resolution originals in `_originals/` if you want them alongside the
-project — that folder is gitignored and never deployed. Only the optimised
-derivatives in `dist/` are published.
+Keep your full-resolution originals wherever you normally keep them — an
+external drive, a Lightroom catalog, a backup. They do not belong in this
+project, and git is genuinely bad at storing them: it keeps every version of
+every file forever.
+
+`_originals/` is available as a scratch folder if you want them alongside the
+project. It is gitignored and never deployed.
 
 ## What happens to a photo at build time
 
