@@ -52,5 +52,41 @@
     "shutter": "1/1000s",
     "iso": "ISO 800",
     "year": 2023
+  },
+  "img-4886e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "135mm",
+    "aperture": "f/5",
+    "shutter": "1/500s",
+    "iso": "ISO 320",
+    "year": 2024
+  },
+  "img-4949e3.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "70mm",
+    "aperture": "f/4",
+    "shutter": "1/500s",
+    "iso": "ISO 100",
+    "year": 2024
+  },
+  "img-4989e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "70mm",
+    "aperture": "f/4",
+    "shutter": "1/250s",
+    "iso": "ISO 200",
+    "year": 2024
+  },
+  "img-6847e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "50mm",
+    "focal": "50mm",
+    "aperture": "f/1.8",
+    "shutter": "1/3200s",
+    "iso": "ISO 100",
+    "year": 2026
   }
 }
