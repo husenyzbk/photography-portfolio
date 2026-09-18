@@ -90,29 +90,24 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
 
     <script>
       /**
-       * Unpins any panel too tall to fit the screen.
+       * Fixes the pinning of any panel too tall to fit the screen.
        *
-       * A pinned panel does not move, so anything inside it below the fold can
-       * never be scrolled to — the page just carries on to the next panel and
-       * that content is unreachable. This is only knowable by measuring: it
-       * depends on the viewport, the font, and how the cards happen to wrap,
-       * so no media query can express it.
+       * A panel pinned at top: 0 never moves, so anything inside it below the
+       * fold can never be scrolled to. Such a panel is pinned by its bottom
+       * edge instead, which lets it scroll through in full and only then hold
+       * still — so the panel after it still slides over it.
        *
-       * Runs again on resize, on rotation, and once images have loaded, since
-       * every one of those changes a panel's height.
+       * Whether a panel fits can only be measured: it depends on the viewport,
+       * the font, and how the cards wrap, so no media query expresses it. Runs
+       * again on resize, rotation, and once images and fonts have landed, since
+       * each changes a panel's height.
+       *
+       * The slack is generous because the test only ever separates "one screen"
+       * from "several" — the overflowing galleries panel is about six. A tight
+       * threshold went wrong: `100svh` and window.innerHeight are different
+       * numbers (svh tracks the viewport with browser UI shown), and the 28px
+       * between them was enough to make the hero think it did not fit.
        */
-      /*
-        A panel that fits is exactly one viewport tall, because min-height: 100svh
-        holds it there — so the test is only ever distinguishing "one screen"
-        from "several screens", never anything marginal. The overflowing
-        galleries panel measures around six screens.
-
-        The comparison therefore needs generous slack. `100svh` and
-        window.innerHeight are not the same number: svh is a CSS unit tracking
-        the viewport with browser UI shown, innerHeight is the live window, and
-        they disagreed by 28px here — enough that a tight threshold made the
-        hero declare itself too tall and drop its pinning.
-      */
       const OVERFLOW_SLACK = 64;
 
       const viewportHeight = () =>
@@ -122,13 +117,23 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
         const panels = document.querySelectorAll('.panel');
         if (!panels.length) return;
 
-        const limit = viewportHeight() + OVERFLOW_SLACK;
+        const vh = viewportHeight();
+        const limit = vh + OVERFLOW_SLACK;
 
         for (const panel of panels) {
-          // Measure without the class, or a panel that was unpinned last pass
-          // keeps reporting its unpinned height and never pins again.
-          panel.classList.remove('panel--flow');
-          panel.classList.toggle('panel--flow', panel.scrollHeight > limit);
+          // Reset before measuring, or last pass's offset skews this one.
+          panel.classList.remove('panel--tall');
+          panel.style.top = '';
+
+          const height = panel.scrollHeight;
+          if (height <= limit) continue;
+
+          // Too tall to pin at the top. Offsetting `top` by exactly the
+          // overflow makes sticky engage only once the panel's bottom edge
+          // reaches the bottom of the screen — so it scrolls through in full
+          // first, then holds still for the next panel to slide over.
+          panel.classList.add('panel--tall');
+          panel.style.top = `${vh - height}px`;
         }
       };
 

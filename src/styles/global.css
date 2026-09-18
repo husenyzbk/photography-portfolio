@@ -166,20 +166,18 @@ h1, h2, h3 {
   background: var(--bg);
 }
 
-/* A panel that is taller than the screen must NOT be pinned.
+/* A panel taller than the screen — on a phone the category cards stack into
+   one column and the galleries panel becomes several screens tall.
 
-   Pinning holds it still, so the part below the fold never scrolls into view —
-   the page simply moves on to the next panel and that content is unreachable.
-   On a phone the category cards stack into one column and the galleries panel
-   becomes several screens tall, which is exactly how this was found.
+   It stays sticky, but the layout script gives it a negative `top` equal to
+   the amount it overflows by. Sticky then holds it only once its *bottom* edge
+   reaches the bottom of the viewport: it scrolls through normally until every
+   card has been seen, and pins after that — so the panel that follows still
+   slides over it.
 
-   `relative`, not `static`: a static element ignores z-index, so the panel
-   would drop behind the pinned panels before it and vanish. Relative keeps it
-   in the stacking order while letting it scroll normally.
-
-   The class is applied by the measuring script in the layout. */
-.panel--flow {
-  position: relative;
+   Pinning it at top: 0 like a panel that fits would freeze it immediately and
+   leave everything below its first screen unreachable. */
+.panel--tall {
   justify-content: flex-start;
 }
 
