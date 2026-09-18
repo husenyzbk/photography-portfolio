@@ -101,6 +101,13 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
        * Runs again on resize, on rotation, and once images have loaded, since
        * every one of those changes a panel's height.
        */
+      // A panel that fits measures exactly one viewport, because min-height
+      // holds it there. So anything within a few dozen pixels of the viewport
+      // is a panel that fits, and the slack absorbs sub-pixel rounding and the
+      // moments mid-load when a height has not settled. Without it the hero —
+      // exactly one viewport tall — intermittently unpinned itself.
+      const OVERFLOW_SLACK = 24;
+
       const syncPanels = () => {
         const panels = document.querySelectorAll('.panel');
         if (!panels.length) return;
@@ -109,7 +116,7 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
           // Measure without the class, or a panel that was unpinned last pass
           // keeps reporting its unpinned height and never pins again.
           panel.classList.remove('panel--flow');
-          const tooTall = panel.scrollHeight > window.innerHeight + 4;
+          const tooTall = panel.scrollHeight > window.innerHeight + OVERFLOW_SLACK;
           panel.classList.toggle('panel--flow', tooTall);
         }
       };
@@ -130,6 +137,8 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
       // Images arriving change panel heights, so measure again once they have.
       window.addEventListener('load', syncPanels);
       document.addEventListener('astro:page-load', syncPanels);
+      // The display face lands after first paint and reflows the text it sets.
+      if (document.fonts?.ready) document.fonts.ready.then(syncPanels);
 
       /**
        * Scroll reveal.
