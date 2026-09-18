@@ -93,7 +93,7 @@ Source images are never served.
 | `npm run dev` | Local dev server with live reload |
 | `npm run build` | Builds the site into `dist/` |
 | `npm run preview` | Serves the built `dist/` exactly as it will deploy |
-| `npm run placeholders` | Regenerates stand-in images (`-- --clean` to replace) |
+| `npm run import` | Brings photos into a gallery, or sets the hero |
 
 ## Adding or renaming a gallery
 
@@ -122,6 +122,7 @@ src/
   components/        Nav, footer, photo grid, lightbox, category card
   pages/             index.astro and the catch-all category route
   photos/            Source images, by category
+  hero/              The single front-page photograph, in no gallery
 ```
 
 ## Notes on the front end
