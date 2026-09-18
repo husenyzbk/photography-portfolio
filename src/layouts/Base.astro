@@ -90,6 +90,48 @@ const ogImageUrl = ogImage ? new URL(ogImage, SITE.url).href : undefined;
 
     <script>
       /**
+       * Unpins any panel too tall to fit the screen.
+       *
+       * A pinned panel does not move, so anything inside it below the fold can
+       * never be scrolled to — the page just carries on to the next panel and
+       * that content is unreachable. This is only knowable by measuring: it
+       * depends on the viewport, the font, and how the cards happen to wrap,
+       * so no media query can express it.
+       *
+       * Runs again on resize, on rotation, and once images have loaded, since
+       * every one of those changes a panel's height.
+       */
+      const syncPanels = () => {
+        const panels = document.querySelectorAll('.panel');
+        if (!panels.length) return;
+
+        for (const panel of panels) {
+          // Measure without the class, or a panel that was unpinned last pass
+          // keeps reporting its unpinned height and never pins again.
+          panel.classList.remove('panel--flow');
+          const tooTall = panel.scrollHeight > window.innerHeight + 4;
+          panel.classList.toggle('panel--flow', tooTall);
+        }
+      };
+
+      let panelTick = false;
+      const queuePanelSync = () => {
+        if (panelTick) return;
+        panelTick = true;
+        requestAnimationFrame(() => {
+          panelTick = false;
+          syncPanels();
+        });
+      };
+
+      syncPanels();
+      window.addEventListener('resize', queuePanelSync, { passive: true });
+      window.addEventListener('orientationchange', queuePanelSync, { passive: true });
+      // Images arriving change panel heights, so measure again once they have.
+      window.addEventListener('load', syncPanels);
+      document.addEventListener('astro:page-load', syncPanels);
+
+      /**
        * Scroll reveal.
        *
        * One shared IntersectionObserver for the whole page rather than a
