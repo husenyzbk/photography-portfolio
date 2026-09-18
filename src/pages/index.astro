@@ -49,9 +49,15 @@ const og = hero
           <p class="hero__tagline">{SITE.tagline}</p>
         </div>
 
-        <div class="hero__cue" aria-hidden="true">
-          <span class="hero__cue-line" />
-        </div>
+        {/* A link, not decoration: it says what it does, and clicking it does
+            it. #about is the panel immediately below. */}
+        <a class="cue" href="#about" data-press="subtle">
+          <span class="cue__label">Scroll</span>
+          <svg class="cue__chevron" viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+            <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" fill="none"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
       </section>
     )
   }
@@ -69,7 +75,7 @@ const og = hero
   }
 
   {/* Replace this text with your own — see src/pages/index.astro */}
-  <section class="bio panel" style="--panel-z:2">
+  <section class="bio panel" id="about" style="--panel-z:2">
     <div class="shell">
     <p class="eyebrow" data-reveal>About</p>
     <p class="bio__lead" data-reveal style="--reveal-delay:120ms">
@@ -184,29 +190,59 @@ const og = hero
     to { opacity: 1; transform: translate3d(0, 0, 0); }
   }
 
-  .hero__cue {
+  /* Centred with auto margins, not translateX(-50%). The press effect and the
+     entrance animation both write `transform`, and either would have wiped out
+     a centring transform and thrown the cue sideways by half its width. */
+  .cue {
     position: absolute;
-    left: 50%;
-    bottom: 1.25rem;
-    width: 1px;
-    height: 3rem;
-    overflow: hidden;
-    opacity: 0.55;
+    left: 0;
+    right: 0;
+    width: fit-content;
+    margin-inline: auto;
+    bottom: clamp(1.25rem, 3vh, 2rem);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+
+    color: var(--on-image);
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+    animation: cue-appear 1s var(--ease) 1.1s both;
   }
 
-  .hero__cue-line {
+  .cue__label {
+    font-size: 0.625rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  /* A repeated nudge downwards. Transform and opacity only, so it costs
+     nothing to run continuously. */
+  .cue__chevron {
     display: block;
-    width: 1px;
-    height: 100%;
-    background: var(--on-image);
-    transform-origin: top;
-    animation: cue 2.4s var(--ease) infinite;
+    animation: cue-nudge 1.9s var(--ease) infinite;
   }
 
-  @keyframes cue {
-    0% { transform: scaleY(0) translateY(0); }
-    40% { transform: scaleY(1) translateY(0); }
-    100% { transform: scaleY(1) translateY(100%); }
+  @keyframes cue-nudge {
+    0%, 100% { transform: translateY(0); opacity: 0.55; }
+    45% { transform: translateY(6px); opacity: 1; }
+  }
+
+  @keyframes cue-appear {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (hover: hover) {
+    .cue:hover .cue__chevron { animation-play-state: paused; transform: translateY(4px); }
+  }
+
+  /* The label alone is enough when motion is unwelcome. */
+  @media (prefers-reduced-motion: reduce) {
+    .cue { animation: none; }
+    .cue__chevron { animation: none; }
   }
 
   /* ----------------------------------------------------------------- bio */
@@ -252,9 +288,5 @@ const og = hero
 
   /* The parallax is decoration. Switch it off and the hero simply sits still. */
   /* The scroll cue is the only motion left in the hero — the pinning itself is
-     plain scrolling, which reduced-motion does not object to. */
-  @media (prefers-reduced-motion: reduce) {
-    .hero__cue { display: none; }
-  }
-</style>
+     plain scrolling, which reduced-motion does not object to. */</style>
 
