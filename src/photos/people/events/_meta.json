@@ -61,5 +61,68 @@
     "shutter": "1/1000s",
     "iso": "ISO 200",
     "year": 2024
+  },
+  "img-6927e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "50mm",
+    "focal": "50mm",
+    "aperture": "f/1.8",
+    "shutter": "1/5000s",
+    "iso": "ISO 100",
+    "year": 2026
+  },
+  "img-6932e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "50mm",
+    "focal": "50mm",
+    "aperture": "f/1.8",
+    "shutter": "1/5000s",
+    "iso": "ISO 100",
+    "year": 2026
+  },
+  "img-6971e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "70mm",
+    "aperture": "f/11",
+    "shutter": "1/250s",
+    "iso": "ISO 800",
+    "year": 2026
+  },
+  "img-6975e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "70mm",
+    "aperture": "f/11",
+    "shutter": "1/1000s",
+    "iso": "ISO 800",
+    "year": 2026
+  },
+  "img-7013e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF70-300mm f/4-5.6 IS USM",
+    "focal": "280mm",
+    "aperture": "f/9",
+    "shutter": "1/1250s",
+    "iso": "ISO 400",
+    "year": 2026
+  },
+  "img-7040e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF35mm f/2",
+    "focal": "35mm",
+    "aperture": "f/9",
+    "shutter": "1/800s",
+    "iso": "ISO 400",
+    "year": 2026
+  },
+  "img-7126e.jpg": {
+    "camera": "Canon EOS 80D",
+    "lens": "EF35mm f/2",
+    "focal": "35mm",
+    "aperture": "f/3.5",
+    "shutter": "1/250s",
+    "iso": "ISO 160",
+    "year": 2026
   }
 }
